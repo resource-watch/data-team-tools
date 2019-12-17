@@ -19,7 +19,7 @@ metadata_to_api = current_mdata.loc[ids_on_backoffice]
 metadata_to_api = metadata_to_api.reset_index().set_index("RW Layer ID")
 
 
-def get_NRT_int(ds, band, asset, prop, num_type, num_decimals, suffix):
+def get_NRT_int(ds, band, asset, prop, num_type, num_decimals, prefix, suffix):
     try:
         num_decimals = int(num_decimals)
         num_format = f'{0:.{num_decimals}f}'
@@ -45,6 +45,7 @@ def get_NRT_int(ds, band, asset, prop, num_type, num_decimals, suffix):
                 "property": "{}".format(prop),
                 "type": "{}".format(num_type),
                 "format": "{}".format(num_format),
+                "prefix": "{}".format(prefix),
                 "suffix": "{}".format(suffix)
 
             }]}}
@@ -52,7 +53,7 @@ def get_NRT_int(ds, band, asset, prop, num_type, num_decimals, suffix):
     return NRT_raster_int
 
 
-def get_regular_int(ds, band, asset, prop, num_type, num_decimals, suffix):
+def get_regular_int(ds, band, asset, prop, num_type, num_decimals, prefix, suffix):
     try:
         num_decimals = int(num_decimals)
         num_format = f'{0:.{num_decimals}f}'
@@ -73,6 +74,7 @@ def get_regular_int(ds, band, asset, prop, num_type, num_decimals, suffix):
                 "property": "{}".format(prop),
                 "type": "{}".format(num_type),
                 "format": "{}".format(num_format),
+                "prefix": "{}".format(prefix),
                 "suffix": "{}".format(suffix)
             }]}}
     return regular_raster_int
@@ -125,6 +127,7 @@ def patch_interactions(info, send=True):
                                   prop=clean_nulls(metadata["Property"]),
                                   num_type=clean_nulls(metadata["Number Type"]),
                                   num_decimals=clean_nulls(metadata["Number of Decimals"]),
+                                  prefix=clean_suffixes(metadata["Prefix"]),
                                   suffix=clean_suffixes(metadata["Suffix"]))
 
     elif (clean_nulls(metadata["NRT"]) == "N"):
@@ -134,6 +137,7 @@ def patch_interactions(info, send=True):
                                       prop=clean_nulls(metadata["Property"]),
                                       num_type=clean_nulls(metadata["Number Type"]),
                                       num_decimals=clean_nulls(metadata["Number of Decimals"]),
+                                      prefix=clean_suffixes(metadata["Prefix"]),
                                       suffix=clean_suffixes(metadata["Suffix"]))
     if send:
         request = []
