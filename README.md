@@ -1,6 +1,4 @@
-
 # data-team-tools
-Data team tools
 
 **Uploading metadata to the API**
 All of our metadata is hosted on a google sheet, and we run the docker command 'metadata-to-api' to update it.  To set this up on your computer: 
