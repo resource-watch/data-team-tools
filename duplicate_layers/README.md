@@ -9,4 +9,4 @@ Each Jupyter Notebook follows the same process and gives you instructions within
 To run each of the notebooks, do the following:
 1. Download the .ipynb file
 2. Open the file in the [Jupyter Notebook Editor](https://jupyter.org/install)
-3. Run the cells and fill in information when necessary. Be ready with the dataset ID you want to edit layers and your API token.
+3. Run the cells, follow the instructions within the notebook, and fill in information when necessary. Be ready with the dataset ID you want to edit layers and your API token.
