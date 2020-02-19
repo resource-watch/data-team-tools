@@ -8,3 +8,4 @@ Currently, only tools to aid in visualizing raster layers have been created. To 
     - [categorical raster data visualizations](https://code.earthengine.google.com/93a39110d7fc30514c76747cd5b99cdd)
     - [quantitative raster data visualizations](https://code.earthengine.google.com/bd95730e83b67ab0bec2e221e0c3e057)
 3. Follow the instructions in the tool that you are using.
+4. When you are finished making a visualization, save the edited version of the tool as *wri_id_public_title* in the *users/resourcewatch/default/ResourceWatch* folder in Google Earth Engine. This will allow you to easily modify the visualization later, if needed.
