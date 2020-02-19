@@ -1,19 +1,13 @@
-# data-team-tools
-
 **Uploading metadata to the API**
 
-All of our metadata is hosted on a Google sheet. Each time we add or update metadata in the Google sheet, we have to push this metadata to the API before it is updated on Resource Watch. We push this metadata to the API using a Python script that is run in a Docker container.
+All of the metadata on Resource Watch is stored in an internally shared Google sheet. Each time we add or update metadata in the Google sheet, we have to push this metadata to the API before it is updated on Resource Watch. This repository contains a Python script to push this metadata from the Google sheet to the API.
 
-run the docker command 'metadata-to-api' to update it.  
+Each time you make changes to metadata in the Google sheet and want to push them to Resource Watch, you should run this script.
 
-To set this up on your computer: 
-  1) Download [Docker](https://www.docker.com/)
-  2) Create a folder on your computer where you want to store this tool.
-  3) [Clone the data-team-tools repository](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) to the folder you just created.
-  4) Navigate to the metadata-to-api file in the command line, and add an .env file using the following commands:
-		- touch .env (to create a new environmental variables file)
-		- open .env (to open this file, then paste info from another DT member and save)
-  5) Run this script to update the metadata by running the following command:
-        - ./start.sh
-        
-	  
+To run this script on your computer: 
+  1) This script is run in a Docker container. Before you can run this script, make sure you have downloaded [Docker](https://www.docker.com/).
+  2) Navigate to the metadata-to-api file in the command line, and create a symbolic link to the master copy of your .env file using the following command:
+    <br>`ln -s /home/path/to/.env .`
+    <br> Note: You only have to create this symbolic link once. You do *not* need to run the command above each time you want to run this script.
+  3) Run this script to update the metadata by running the following command:
+    <br>`./start.sh`
