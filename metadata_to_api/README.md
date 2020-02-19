@@ -1,6 +1,6 @@
 **Uploading metadata to the API**
 
-All of the metadata on Resource Watch is stored in an internally shared Google sheet. Each time we add or update metadata in the Google sheet, we have to push this metadata to the API before it is updated on Resource Watch. This repository contains a Python script to push this metadata from the Google sheet to the API.
+All of the metadata on Resource Watch is stored in an internally shared Google sheet ("Launch Metadata"). Each time we add or update metadata in the Google sheet, we have to push this metadata to the API before it is updated on Resource Watch. This repository contains a Python script to push this metadata from the Google sheet to the API.
 
 To run this script on your computer: 
   1. This script is run in a Docker container. Before you can run this script, make sure you have downloaded [Docker](https://www.docker.com/).
