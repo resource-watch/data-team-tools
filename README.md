@@ -1,4 +1,4 @@
-**Data Team Tools Repository**
+# Data Team Tools Repository
 
 This repository was created to store tools that the Resource Watch Data Team uses in their workflow. Each folder may contain one tool or a set of tools that have a very similar function.
 
