@@ -1,11 +1,9 @@
-**Duplicating Resource Watch Layers**
+**Editing Resource Watch Layers**
 
-This folder contains Python notebooks for duplicating layers in the Resource Watch backoffice.
+This folder contains Python notebooks for editing layers in the Resource Watch backoffice.
 
 Folder contents:
-1. **Duplicate_Raster_Layers.ipynb**: This Python notebook helps you to duplicate GEE layers from the backoffice.
-2. **Duplicate_Vector_Layers.ipynb**: This Python notebook helps you to duplicate Carto layers from the backoffice.
-3. **LMIPy_Duplicate_Layers_No_Change.ipynb**: This Python notebook duplicates layers and only changes the name of the new layer.
+1. **Edit_Vector_Layers.ipynb**: This Python notebook helps you to edit Carto layers from the backoffice.
 
 Each Python notebook follows the same process and gives you instructions within the notebook on how to run them.
 To run each of the notebooks, do the following:
