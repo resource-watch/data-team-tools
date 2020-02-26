@@ -3,7 +3,8 @@
 This folder contains Python notebooks for editing layers in the Resource Watch backoffice.
 
 Folder contents:
-1. **Edit_Vector_Layers.ipynb**: This Python notebook helps you to edit Carto layers from the backoffice.
+1. **Edit_Vector_Layers.ipynb**: This Python notebook helps you to edit Carto layers from the back office.
+2. **Edit_Raster_Layers.ipynb**: This Python notebook helps you to edit GEE layers from the back office.
 
 Each Python notebook follows the same process and gives you instructions within the notebook on how to run them.
 To run each of the notebooks, do the following:
