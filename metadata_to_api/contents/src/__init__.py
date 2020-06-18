@@ -14,9 +14,9 @@ r = req.get(os.getenv('METADATA_SHEET')).content
 current_mdata = pd.read_csv(pd.compat.StringIO(r.decode('utf-8')), header=0)
 
 # Continue with the metadata that matches elements in the tracking sheet
-ids_on_backoffice = pd.notnull(current_mdata["RW ID"])
+ids_on_backoffice = pd.notnull(current_mdata["API_ID"])
 metadata_to_api = current_mdata.loc[ids_on_backoffice]
-metadata_to_api = metadata_to_api.reset_index().set_index("RW ID")
+metadata_to_api = metadata_to_api.reset_index().set_index("API_ID")
 
 # line breaks from html to markdown (b/c newlines not preserved when reading in the google sheet)
 metadata_to_api.replace('<br>', '  \n  \n', regex=True, inplace=True)
@@ -69,8 +69,10 @@ def process_description(metadata):
         processed_description = processed_description+'### Overview  \n  \n'+metadata["Overview"]
         if type(metadata["Methodology"])==str:
             processed_description = processed_description+'  \n  \n### Methodology  \n  \n'+metadata["Methodology"]
-        if type(metadata["Data shown on Resource Watch Map"])==str:
-            processed_description = processed_description+'  \n  \n### Data shown on Resource Watch Map  \n  \n'+metadata["Data shown on Resource Watch Map"]
+        if type(metadata["Additional Information"])==str:
+            processed_description = processed_description+'  \n  \n### Additional Information  \n  \n'+metadata["Additional Information"]
+        if type(metadata["Visualizing the Data"])==str:
+            processed_description = processed_description+'  \n  \n### Visualizing the Data  \n  \n'+metadata["Visualizing the Data"]
         if type(metadata["Disclaimer"])==str:
             processed_description = processed_description+'  \n  \n### Disclaimer  \n  \n'+ metadata["Disclaimer"]
     else:
@@ -125,7 +127,7 @@ def patch_metadata(info, send=True):
         "dataset": ds,
 
         "info": {
-            "rwId": clean_nulls(metadata["WRI ID"]),
+            "rwId": clean_nulls(metadata["WRI_ID"]),
 
             "data_type": clean_nulls(metadata["Data Type"]),
 
