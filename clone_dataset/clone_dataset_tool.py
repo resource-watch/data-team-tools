@@ -41,12 +41,13 @@ def create_headers():
         'authorization': "{}".format(os.getenv('apiToken')),
     }
 
-def clone_ds(self, token=None, enviro='preproduction', clone_server=None, dataset_params=None, clone_children=True, clone_first_layer_only=True, clone_default_widget_only=True):
+def clone_ds(self, token=None, enviro='preproduction', clone_server=None, dataset_params=None, clone_children=True, clone_first_layer_only=True, clone_default_widget_only=True, published = False):
     """
     Create a clone of a target Dataset as a new staging or prod Dataset.
-    A set of attributes can be specified for the clone Dataset.
+    A set of attributes can be specified for the clone Dataset. 
     The argument `clone_server` specifies the server to clone to. Default server = https://api.resourcewatch.org
     Set clone_children=True to clone all child layers, and widgets.
+    Set published=True to publish the layer. 
     """
     if not clone_server: clone_server = self.server
     if not token:
@@ -64,7 +65,7 @@ def clone_ds(self, token=None, enviro='preproduction', clone_server=None, datase
                 'connectorUrl': clone_dataset_attr['connectorUrl'],
                 'tableName': clone_dataset_attr['tableName'],
                 'provider': clone_dataset_attr['provider'],
-                'published': clone_dataset_attr['published'],
+                'published': published,
                 'env': enviro,
                 'name': clone_dataset_attr['name'],
                 'widgetRelevantProps': clone_dataset_attr['widgetRelevantProps'],
