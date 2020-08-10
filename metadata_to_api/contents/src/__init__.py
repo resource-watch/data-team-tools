@@ -162,7 +162,7 @@ def patch_metadata(info, send=True):
                 # "language": "en",
                 # "application": "rw",
                 "connectorUrl": clean_nulls(metadata["Connector URL"]),
-                "tableName": clean_nulls(metadata["Connector URL"].split(os.sep)[-2])
+                "tableName": clean_nulls(metadata["Connector URL"].split('/')[-2])
             }
         else:
             row_payload_connector = {
