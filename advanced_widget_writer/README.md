@@ -1,4 +1,5 @@
 **Write Advanced Widgets**
+
 This folder contains Python scripts to write advanced widgets in the Resource Watch backoffice.
 
 Folder contents:
