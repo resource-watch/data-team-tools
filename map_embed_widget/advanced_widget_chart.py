@@ -9,6 +9,8 @@ widget_to_overwrite = ''
 
 # replace the empty dictionary with the code from the vega editor
 # replace true with True and null with None
+# note: you ONLY have to replace values that are NOT strings (inside quotation marks),
+# e.g. you should replace null with None, but do not replace "null" - keep all strings as they are
 vega = {}
 
 # create payload to send to API
