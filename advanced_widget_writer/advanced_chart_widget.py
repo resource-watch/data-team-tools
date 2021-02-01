@@ -28,12 +28,6 @@ payload = {
                         "type": "number",
                         "property": "Global Reefs Experiencing Bleaching (%)",
                         "column": "bleaching_percentage"
-                    },
-                    {
-                        "format": ".2f",
-                        "type": "number",
-                        "property": "Decade",
-                        "column": "decade_start"
                     }
                 ]
             },
