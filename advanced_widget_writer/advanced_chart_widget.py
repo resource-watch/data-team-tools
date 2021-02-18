@@ -134,7 +134,6 @@ metadata_payload = {
 # construct the url for the request 
 url = f'http://api.resourcewatch.org/v1/dataset/{dataset_id}/widget/{widget_id}/metadata'
 # send it to the API 
-# if you are adding metadata to an advanced widget, uncomment and use the line of code below
 r = requests.post(url = url, json = metadata_payload, headers = headers)
 print(r.content)
 
