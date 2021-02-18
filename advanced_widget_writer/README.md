@@ -10,6 +10,6 @@ To create your advanced widget:
 <br><br>
 For advanced chart widgets, use the code in the appropriate script to create the advanced widget.
 <br><br>
-For the multi-layer map embed widgets, you will have to create an empty widget in the back office first. You do not need to actually make a real widget, just click advanced, and give it the title, description, and whatever other metadata you want. Save that empty advanced widget.
+For the multi-layer map embed widgets, you will have to create an empty widget in the back office first. You do not need to actually make a real widget. Just click advanced, and give it the title, description, and whatever other metadata you want. Save that empty advanced widget.
 <br><br>
 Before running either of the script, you will need to load your .env file first. Please follow more detailed instructions inside the appropriate script.
