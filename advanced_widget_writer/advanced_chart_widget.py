@@ -74,7 +74,6 @@ widget_payload = {
 # send the request to create widget to the API 
 try:
     url = f'https://api.resourcewatch.org/v1/dataset/{dataset_id}/widget'
-    # if you are creating a new widget, uncomment and use the line of code below
     r = requests.post(url, data=json.dumps(widget_payload), headers=headers)
     widget_id = r.json()['data']['id']
 except:
@@ -100,7 +99,6 @@ widget_payload = {}
 # send the request to create widget to the API 
 try:
     url = f'https://api.resourcewatch.org/v1/dataset/{dataset_id}/widget/{widget_id}'
-    # if you are creating a new widget, uncomment and use the line of code below
     r = requests.patch(url, data=json.dumps(widget_payload), headers=headers)
     print(r.json())
 except:
@@ -175,6 +173,5 @@ metadata_payload = {
 # construct the url for the request 
 url = f'http://api.resourcewatch.org/v1/dataset/{dataset_id}/widget/{widget_id}/metadata'
 # send it to the API 
-# if you are adding metadata to an advanced widget, uncomment and use the line of code below
 r = requests.patch(url = url, json = metadata_payload, headers = headers)
 print(r.content)
