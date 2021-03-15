@@ -16,3 +16,8 @@ Misleading since the feature is still correctly written.
 
 ### Solution
 If it's a point shapefile, one possible cause is that points have been read as multipoints by geopandas and made Carto confused. To solve the issue, clean up the geometry column by extracting the points from multipoints. There is an example in the script of bio_007b.
+
+## Error: When updating a timestamp column of a Carto table through the SQL API, the response of the API is "column is of type timestamp without time zone but expression is of type text"
+
+### Solution
+Use date(column name) function in the sql query 
