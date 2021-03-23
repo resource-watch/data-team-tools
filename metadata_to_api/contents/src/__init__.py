@@ -39,9 +39,9 @@ def create_source_object(sources):
         srcs = sources.split("/")
         for ix, src in enumerate(srcs):
             source_object.append({
-                "source-name": src,
+                "source-name": "",
                 "id": ix,
-                "source-description": ""
+                "source-description": src
             })
         return source_object
     return None
@@ -127,7 +127,7 @@ def patch_metadata(info, send=True):
         "dataset": ds,
 
         "info": {
-            "rwId": clean_nulls(metadata["WRI_ID"]),
+            "rwId": clean_nulls(metadata["New WRI_ID"]),
 
             "data_type": clean_nulls(metadata["Data Type"]),
 
