@@ -67,3 +67,11 @@ See 'docker run --help'.
 ### Solution:			
 There is a variable in Dockerfile (ARG NAME=cli_041) and in start.sh (NAME=cli_041) to specify build argument for Docker. If you try to set these name variable as something like cli_041_antarctica_ice, you might encounter this error. To solve the issue change the arg name in both dockerfile and start.sh (for example: cli_041_antarctica_ice to cli_041) and the problem may go away. Sometimes your name could be too long and you need to shorted it. We still don’t know why this happens and the correct approach to solve the issue. However, this problem doesn’t happen while the script is running on the server. So, you don’t have to worry about that. This fix is just necessary when you try to run the docker locally to check something or fix a bug.
 
+## Script got killed on server due to MemryError
+
+### Solution:
+Limit the memory usage of the script: in start.sh, add the parameter '-m' followed by the maximum amount of memory that docker can use for this script
+```
+docker run \
+    -m 1700m 
+```
