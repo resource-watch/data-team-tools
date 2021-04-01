@@ -78,6 +78,10 @@ def process_description(metadata):
     else:
         if clean_nulls(metadata["Description"])!=None:
             processed_description = processed_description+clean_nulls(metadata["Description"])
+            if type(metadata["Additional Information"])==str:
+                processed_description = processed_description+'  \n  \n### Additional Information  \n  \n'+metadata["Additional Information"]
+            if type(metadata["Disclaimer"])==str:
+                processed_description = processed_description+'  \n  \n### Disclaimer  \n  \n'+ metadata["Disclaimer"]
         else:
             processed_description = clean_nulls(metadata["Description"])
     return processed_description
