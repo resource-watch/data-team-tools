@@ -16,6 +16,7 @@ import json
 import requests
 import time
 
+
 # INPUTS
 # enter dataset id of dataset to duplicate here
 dataset_id = '' # ex: '79e06dd8-a2ae-45eb-8e99-e73bc87ec946'
@@ -24,6 +25,13 @@ dataset_id = '' # ex: '79e06dd8-a2ae-45eb-8e99-e73bc87ec946'
 # this should be different than the original dataset name
 # remember that this name is what makes the url slug for the dataset!
 new_dataset_name = '' # ex: cli.051a Projected Minimum Temperature Ensemble (RCP 8.5)
+
+# do you want to replace the connector url with a new one?
+# Should be one of the format:
+#   1)https://{carto_account}.carto.com/tables/{table_name}/public
+#   2)full asset/collection name on GEE (ex: users/resourcewatch_wri/cit_035_tropomi_atmospheric_chemistry_model_30day_avg/O3)
+# If it is left blank, the new dataset will use the same connectorUrl as the original dataset
+new_dataset_connectorUrl = ''
 
 # do you want to clone only the first layer or all of the layers?
 clone_first_layer_only = False
@@ -47,7 +55,7 @@ def clone_ds(self, token=None, enviro='preproduction', clone_server=None, datase
     A set of attributes can be specified for the clone Dataset. 
     The argument `clone_server` specifies the server to clone to. Default server = https://api.resourcewatch.org
     Set clone_children=True to clone all child layers, and widgets.
-    Set published=True to publish the layer. 
+    Set published=True to publish the layer.
     """
     if not clone_server: clone_server = self.server
     if not token:
@@ -78,6 +86,12 @@ def clone_ds(self, token=None, enviro='preproduction', clone_server=None, datase
             payload['dataset'].update({'applicationConfig': clone_dataset_attr['applicationConfig']})
         if 'subscribable' in clone_dataset_attr:
             payload['dataset'].update({'subscribable': clone_dataset_attr['subscribable']})
+        if new_dataset_connectorUrl:
+            if 'carto' in new_dataset_connectorUrl:
+                payload['dataset'].update({'connectorUrl': new_dataset_connectorUrl})
+                payload['dataset'].update({'tableName': new_dataset_connectorUrl.split('/')[-2]})
+            else:
+                payload['dataset'].update({'tableName': new_dataset_connectorUrl})
         print(f'Creating clone dataset')
         url = f'{clone_server}/dataset'
         headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json', 'Cache-Control': 'no-cache'}
