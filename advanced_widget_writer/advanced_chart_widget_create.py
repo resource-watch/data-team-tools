@@ -30,33 +30,7 @@ widget_payload = {
     "description": description,
     "widgetConfig": {
         "schema": "https://vega.github.io/schema/vega/v5.json",
-        **vega,
-        "interaction_config":[{
-            "name": "tooltip",
-            "config": {
-                "fields": [
-                    {
-                        "column": "y",
-                        "property": "Total tCO₂e per Million Kilocalories Consumed",
-                        "type": "number",
-                        "format": ".2s"
-                        },
-                    {
-                        "column": "x",
-                        "property": "Food Type",
-                        "type": "string",
-                        "format": ".2f"
-                        }
-                    ]
-                }
-            }],
-        "we_meta": {
-            "core": "2.5.5",
-            "editor": "2.5.5",
-            "renderer": "2.5.5",
-            "adapter": "rw-adapter",
-            "advanced": True
-            }
+        **vega
       },
     "env": 'production',
     "application": ['rw']
