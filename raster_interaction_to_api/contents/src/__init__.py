@@ -13,6 +13,11 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 r = req.get(os.getenv('RASTER_INTERACTION_SHEET')).content
 current_mdata = pd.read_csv(pd.compat.StringIO(r.decode('utf-8')), header=0, index_col=[0]).dropna(subset=["RW Dataset ID", "RW Layer ID", "GEE Asset ID", "Band Name", "Property", "Number Type", "Number of Decimals", "NRT", "Update?"])
 
+# update 
+current_mdata = current_mdata[["Layer Link", "Property", "Prefix", "Suffix", "Number Type", "Number of Decimals", "NRT", "Update?", "Needs Unit Change", "Notes"]]
+current_mdata['RW Dataset ID'] = [x[-36:] for x in current_mdata["Layer Link"]]
+current_mdata['RW Layer ID'] = [x[44: 80] for x in current_mdata["Layer Link"]]
+
 # Continue with the metadata that matches elements in the tracking sheet
 ids_on_backoffice = pd.notnull(current_mdata["RW Dataset ID"])
 metadata_to_api = current_mdata.loc[ids_on_backoffice]
@@ -108,6 +113,22 @@ def create_headers():
         'authorization': "{}".format(os.getenv('apiToken')),
     }
 
+def get_band_name(lyr_url):
+    r = req.get(lyr_url).json()
+    sld = r['data']['attributes']['layerConfig']['body']['sldValue']
+    if 'SourceChannelName' in sld:
+        substring = sld.split('SourceChannelName')[1]
+        end_index = substring.index('<')
+        band_name = substring[1: end_index]
+    else:
+        band_name = 'b1'
+
+    return band_name
+
+def get_asset_id(lyr_url):
+    r = req.get(lyr_url).json()
+    asset_id = r['data']['attributes']['layerConfig']['assetId']
+    return asset_id
 
 def patch_interactions(info, send=True):
     lyr = info[0]
@@ -122,8 +143,8 @@ def patch_interactions(info, send=True):
     logging.info("Processing lyr: {}".format(lyr))
     if (clean_nulls(metadata["NRT"]) == "Y"):
         row_payload = get_NRT_int(ds=ds,
-                                  band=clean_nulls(metadata["Band Name"]),
-                                  asset=clean_nulls(metadata["GEE Asset ID"]),
+                                  band=get_band_name(rw_api_url),
+                                  asset=get_asset_id(rw_api_url),
                                   prop=clean_nulls(metadata["Property"]),
                                   num_type=clean_nulls(metadata["Number Type"]),
                                   num_decimals=clean_nulls(metadata["Number of Decimals"]),
@@ -132,8 +153,8 @@ def patch_interactions(info, send=True):
 
     elif (clean_nulls(metadata["NRT"]) == "N"):
         row_payload = get_regular_int(ds=ds,
-                                      band=clean_nulls(metadata["Band Name"]),
-                                      asset=clean_nulls(metadata["GEE Asset ID"]),
+                                      band=get_band_name(rw_api_url),
+                                      asset=get_asset_id(rw_api_url),
                                       prop=clean_nulls(metadata["Property"]),
                                       num_type=clean_nulls(metadata["Number Type"]),
                                       num_decimals=clean_nulls(metadata["Number of Decimals"]),
