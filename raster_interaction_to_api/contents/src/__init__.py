@@ -10,11 +10,12 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 
 # Pull in raster interaction metadata
-r = req.get(os.getenv('RASTER_INTERACTION_SHEET')).content
-current_mdata = pd.read_csv(pd.compat.StringIO(r.decode('utf-8')), header=0, index_col=[0]).dropna(subset=["RW Dataset ID", "RW Layer ID", "GEE Asset ID", "Band Name", "Property", "Number Type", "Number of Decimals", "NRT", "Update?"])
+#r = req.get(os.getenv('RASTER_INTERACTION_SHEET')).content
+r = req.get("https://docs.google.com/spreadsheets/d/1IjyLR2Zs9WwuAoSxCNuAqPgvHwuNSOdpZQHlftowos0/export?format=csv").content
+current_mdata = pd.read_csv(pd.compat.StringIO(r.decode('utf-8')), header=0, index_col=[0]).dropna(subset=["Property", "Number Type", "Number of Decimals", "NRT", "Update?"])
 
 # update 
-current_mdata = current_mdata[["Layer Link", "Property", "Prefix", "Suffix", "Number Type", "Number of Decimals", "NRT", "Update?", "Needs Unit Change", "Notes"]]
+#current_mdata = current_mdata[["Layer Link", "Property", "Prefix", "Suffix", "Number Type", "Number of Decimals", "NRT", "Update?", "Needs Unit Change", "Notes"]]
 current_mdata['RW Dataset ID'] = [x[-36:] for x in current_mdata["Layer Link"]]
 current_mdata['RW Layer ID'] = [x[44: 80] for x in current_mdata["Layer Link"]]
 
