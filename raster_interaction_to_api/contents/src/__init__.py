@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 import sys
+import ee
 import os
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
@@ -85,7 +86,6 @@ def get_regular_int(ds, band, asset, prop, num_type, num_decimals, prefix, suffi
             }]}}
     return regular_raster_int
 
-
 def clean_nulls(val):
     """Used to clean np.nan values from the metadata update call... which don't play nice with the RW API"""
     try:
@@ -122,14 +122,31 @@ def get_band_name(lyr_url):
         end_index = substring.index('<')
         band_name = substring[1: end_index]
     else:
-        band_name = 'b1'
-
+        asset_id = r['data']['attributes']['layerConfig']['assetId']
+        band_info = ee.data.getInfo(asset_id)['bands']
+        if len(band_info) > 1:
+            logging.debug('Band not specified in layer configuration when more than 1 band exist')
+        else: 
+            band_name = band_info[0]['id']
     return band_name
 
 def get_asset_id(lyr_url):
     r = req.get(lyr_url).json()
     asset_id = r['data']['attributes']['layerConfig']['assetId']
     return asset_id
+
+def initialize_ee():
+    '''
+    Initialize ee module
+    '''
+    # get GEE credentials from env file
+    GEE_JSON = os.environ.get("GEE_JSON")
+    _CREDENTIAL_FILE = 'credentials.json'
+    GEE_SERVICE_ACCOUNT = os.environ.get("GEE_SERVICE_ACCOUNT")
+    with open(_CREDENTIAL_FILE, 'w') as f:
+        f.write(GEE_JSON)
+    auth = ee.ServiceAccountCredentials(GEE_SERVICE_ACCOUNT, _CREDENTIAL_FILE)
+    ee.Initialize(auth)
 
 def patch_interactions(info, send=True):
     lyr = info[0]
@@ -200,4 +217,5 @@ def send_patches(df):
 
 
 def main():
+    initialize_ee()
     send_patches(metadata_to_api)
