@@ -123,7 +123,11 @@ def get_band_name(lyr_url):
         band_name = substring[1: end_index]
     else:
         asset_id = r['data']['attributes']['layerConfig']['assetId']
-        band_info = ee.data.getInfo(asset_id)['bands']
+        asset = ee.data.getInfo(asset_id)
+        if asset['type'] == 'IMAGE_COLLECTION':
+            image = ee.data.listAssets({'parent':asset['name']})['assets'][0]
+            asset = ee.data.getInfo(image['name'])
+        band_info = asset['bands']
         if len(band_info) > 1:
             logging.debug('Band not specified in layer configuration when more than 1 band exist')
         else: 
