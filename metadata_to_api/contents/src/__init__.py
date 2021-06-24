@@ -97,11 +97,7 @@ def patch_metadata(info, send=True):
     # If the data is of type raster, don't include the Download Data (S3) link
     flag1 = clean_nulls(metadata["Data Type"]) != None
     if (flag1):
-        flag2 = clean_nulls(metadata["Data Type"]).lower() != "raster"
-        if (flag2):
-            data_dl_link = clean_nulls(metadata["Download link"])
-        else:
-            data_dl_link = None
+        data_dl_link = clean_nulls(metadata["Download link"])
     else:
         data_dl_link = None
 
