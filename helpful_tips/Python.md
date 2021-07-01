@@ -21,3 +21,35 @@ If it's a point shapefile, one possible cause is that points have been read as m
 
 ### Solution
 Use date(column name) function in the sql query 
+
+## Error: When running a command line process from a python script using subprocess.run, the command does not run as desired 
+Example: 
+```
+File "/home/rthoms/anaconda3/envs/rw/lib/python3.7/site-packages/GDAL-2.3.3-py3.7-linux-x86_64.egg-info/scripts/gdal_calc.py", line 350, in doit
+    myResult = ((1 * (myNDVs == 0)) * myResult) + (myOutNDV * myNDVs)
+numpy.core._exceptions.UFuncTypeError: ufunc 'multiply' did not contain a loop with signature matching types...
+```
+
+### Solution 
+Use shlex (defualt library) to format the command line subprocess
+```python
+import shlex
+cmd = 'gdalwarp -with -all -my -fancy -command -options -i -know -work -in -my -shell'
+posix_cmd = shlex.split(cmd, posix=True)
+subprocess.check_call(posix_cmd, cwd=cwd)
+```
+
+## Error: Time out when uploading large files to GCS with util_cloud.gcs_upload
+Example: 
+```
+... raise ConnectionError(err, request=request)
+requests.exceptions.ConnectionError: ('Connection aborted.', timeout('The write operation timed out'))
+```
+
+### Solution
+Manually change the upload speed in the processing script 
+```python
+# The default setting requires an uploading speed at 10MB/min. Reduce the chunk size, if the network condition is not good.
+storage.blob._DEFAULT_CHUNKSIZE = 5 * 1024* 1024  # 5 MB
+storage.blob._MAX_MULTIPART_SIZE = 5 * 1024* 1024  # 5 MB
+```
