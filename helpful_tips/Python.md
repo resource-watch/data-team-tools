@@ -22,8 +22,6 @@ If it's a point shapefile, one possible cause is that points have been read as m
 ### Solution
 Use date(column name) function in the sql query 
 
-## Error: Upload timeout for util_cloud.gcs_upload, when the raster files are large, or the internet is not fast enough
-
 ## Error: Processed and/or raw data file cannot be uploaded to AWS because the zip exceeded the maximum file size
 
 ### Solution
