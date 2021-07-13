@@ -21,3 +21,29 @@ If it's a point shapefile, one possible cause is that points have been read as m
 
 ### Solution
 Use date(column name) function in the sql query 
+
+## Error: Upload timeout for util_cloud.gcs_upload, when the raster files are large, or the internet is not fast enough
+
+### Solution
+Pause OneDrive syncing, and reduce the upload chunk size.
+```
+# The default setting requires an uploading speed at 10MB/min. Reduce the chunk size if the network condition is not good.
+storage.blob._DEFAULT_CHUNKSIZE = 5 * 1024* 1024  # 5 MB/min
+storage.blob._MAX_MULTIPART_SIZE = 5 * 1024* 1024  # 5 MB/min
+```
+
+## Error: Processed and/or raw data file cannot be uploaded to AWS because the zip exceeded the maximum file size
+
+### Solution
+Import zipfile, and set compress_type parameter to zipfile.ZIP_DEFALTED in the zip function.
+```
+import zipfile
+
+with ZipFile(processed_data_dir,'w') as zipped:
+    for file in processed_data_file:
+        zipped.write(file, os.path.basename(file), compress_type= zipfile.ZIP_DEFLATED)
+```
+
+
+
+
