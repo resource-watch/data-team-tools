@@ -24,14 +24,6 @@ Use date(column name) function in the sql query
 
 ## Error: Upload timeout for util_cloud.gcs_upload, when the raster files are large, or the internet is not fast enough
 
-### Solution
-Pause OneDrive syncing, and reduce the upload chunk size.
-```
-# The default setting requires an uploading speed at 10MB/min. Reduce the chunk size if the network condition is not good.
-storage.blob._DEFAULT_CHUNKSIZE = 5 * 1024* 1024  # 5 MB/min
-storage.blob._MAX_MULTIPART_SIZE = 5 * 1024* 1024  # 5 MB/min
-```
-
 ## Error: Processed and/or raw data file cannot be uploaded to AWS because the zip exceeded the maximum file size
 
 ### Solution
