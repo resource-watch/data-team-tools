@@ -21,3 +21,19 @@ If it's a point shapefile, one possible cause is that points have been read as m
 
 ### Solution
 Use date(column name) function in the sql query 
+
+## Error: Processed and/or raw data file cannot be uploaded to AWS because the zip exceeded the maximum file size
+
+### Solution
+Import zipfile, and set compress_type parameter to zipfile.ZIP_DEFALTED in the zip function.
+```
+import zipfile
+
+with ZipFile(processed_data_dir,'w') as zipped:
+    for file in processed_data_file:
+        zipped.write(file, os.path.basename(file), compress_type= zipfile.ZIP_DEFLATED)
+```
+
+
+
+
