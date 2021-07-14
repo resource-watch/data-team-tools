@@ -53,3 +53,15 @@ Manually change the upload speed in the processing script
 storage.blob._DEFAULT_CHUNKSIZE = 5 * 1024* 1024  # 5 MB
 storage.blob._MAX_MULTIPART_SIZE = 5 * 1024* 1024  # 5 MB
 ```
+
+## Error: Processed and/or raw data file cannot be uploaded to AWS because the zip exceeded the maximum file size
+
+### Solution
+Import zipfile, and set compress_type parameter to zipfile.ZIP_DEFALTED in the zip function.
+```
+import zipfile
+
+with ZipFile(processed_data_dir,'w') as zipped:
+    for file in processed_data_file:
+        zipped.write(file, os.path.basename(file), compress_type= zipfile.ZIP_DEFLATED)
+```
