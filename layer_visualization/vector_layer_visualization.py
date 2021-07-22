@@ -1,0 +1,345 @@
+#Import necessary layers
+import os
+from IPython.display import display
+from pprint import pprint
+import json
+import cartosql
+from numpy.lib.arraysetops import unique
+import pandas as pd
+import mapclassify
+from colour import Color
+import json
+
+# username and api key of the carto account 
+CARTO_USER = os.getenv('CARTO_WRI_RW_USER')
+CARTO_KEY = os.getenv('CARTO_WRI_RW_KEY')
+
+'''
+Set up parameters for dataset
+'''
+# name of table on Carto which you want to create map
+# this should be a table name that is currently in use
+table_name = 'soc_039_rw1_out_of_school_rate_edit'
+
+# if the dataset has a time line, set timeline = True
+# otherwise, set timeline = False
+timeline = True
+# if timeline is true, set the data year for making the map
+# if timeline is false, the year variable wont't be used, but don't comment it out
+year = 2018
+
+# geometry type
+geo_type = 'polygon' # 'polygon', 'line', or 'point'
+
+# set break type
+# basic - if use only one color
+# unique - if the colors are determined by unique values
+# choropleth - if use gradient colors determined by values
+break_type = 'basic' # 'basic', 'unique', or 'choroleth'
+
+# number of unique values/number of gradient breaks
+# if break_type is 'basic', the num_break variable wont't be used, but don't comment it out
+num_break = 5 
+
+# set colors
+# if break_type is 'basic', you have to manually set the color
+# colors = [''] # e.g. '#ffc0cb'
+# if break_type is 'unique' or 'choropleth', you can manually set the colors by the list, or use the function below to set the color ramp
+# colors = [''] # e.g. '#ffc0cb'
+colors = [color.hex_l for color in list(Color("white").range_to(Color("pink"), num_break))]
+
+
+# set break method
+# if the break_type is 'choropleth', you have to choose a break_method below
+# if break_type is 'basic' or 'unique', the break_method variable wont't be used, but don't comment it out
+break_method = 'Quantiles' # 'Jenks', 'EqualIntervals', 'Quantiles', or 'Manual'
+# if break_method is 'Manual', you have to manually put the break points in the list below
+# if break_method is nor 'Manual', the selected_breaks variable wont't be used, but don't comment it out
+selected_breaks = [] # e.g. [100,200,300,400,500]
+
+# if need to join dataset with WRI shapefile
+join_WRI_shape = True
+
+# fetch columns
+# name of the value column, which the unique values or gradient values are based on 
+col_value = 'value'
+# name of the datetime column, which the timestamp is based on
+col_datetime = 'datetime'
+# name the country column, which the country name are based on (when join with the wri shapefile)
+col_country = 'location'
+# name of other columns that you want to included in the final table (e.g. need more columns for interaction)
+# if you don't need any other columns, keep the col_interactive as a blank list
+col_interactive = [] # e.g. 'time'
+# if join_WRI_shape or 'timeline' is false, some of the variables above wont't be used, but don't comment it out
+
+
+'''
+Define functions
+'''
+def create_headers(timeline, year):
+    '''
+    creat layer config header
+    INPUT  timeline: if the dataset has a timeline or not
+           year: if the dataset has a timeline, the year that used to create the map
+    OUTPUT layer config header
+    '''
+    if timeline == True:
+        return {
+            'account': CARTO_USER,
+            "layerType": "vector",
+            "timelineLabel": str(year),
+            "order": year,
+            "timeline": True,
+        }
+    else:
+        return {
+            'account': CARTO_USER,
+            "layerType": "vector",
+        } 
+
+def create_sql(timeline, year, join_WRI_shape, table_name, col_value, col_datetime, col_country, col_interactive):
+    '''
+    create sql statement to tell what data to pull from Carto
+    INPUT  timeline: if the dataset has a timeline
+           year: use which year of the data to create the map
+           join_WRI_shape: if the dateset need to be joined with WRI shapefile
+           table_name: name of the Carto table
+           col_value: the column the unique values or gradient values are based on
+           col_datetime: the column the timestamp is based on
+           col_country: the column the country name are based on (when join with the wri shapefile)
+           col_interactive: name of other columns that you want to included in the sql query
+    OUTPUT the sql statement 
+    '''
+    if len(col_interactive)>0:
+        cols_interactive = [f'data.{col_inter}' for col_inter in col_interactive]
+        separator = ', '
+        cols_interactive = ', '+separator.join(cols_interactive)
+    else:
+        cols_interactive = ''
+
+    if (join_WRI_shape == True and timeline == True):
+        return f"SELECT wri.cartodb_id, ST_Transform(wri.the_geom, 3857) AS the_geom_webmercator, wri.name, data.{col_country}, data.{col_value}, data.{col_datetime}{cols_interactive} "\
+               f"FROM {table_name} data "\
+               f"LEFT OUTER JOIN wri_countries_a wri ON wri.iso_a3 ILIKE TRIM(data.{col_country}) "\
+               f"WHERE EXTRACT(YEAR FROM data.{col_datetime}) = {year} AND data.{col_value} IS NOT NULL AND wri.iso_a3 IS NOT NULL "\
+               "UNION "\
+               f"SELECT wri.cartodb_id, ST_Transform(wri.the_geom, 3857) AS the_geom_webmercator, wri.name, data.{col_country}, data.{col_value}, data.{col_datetime}{cols_interactive} "\
+               f"FROM {table_name} data "\
+               f"INNER JOIN rw_aliasing_countries aliasing ON TRIM(data.{col_country}) ILIKE aliasing.alias "\
+               "INNER JOIN wri_countries_a wri ON wri.iso_a3 = aliasing.iso "\
+               f"WHERE EXTRACT(YEAR FROM data.{col_datetime}) = {year} AND data.{col_value} IS NOT NULL"
+    if (join_WRI_shape == True and timeline == False):
+        return f"SELECT wri.cartodb_id, ST_Transform(wri.the_geom, 3857) AS the_geom_webmercator, wri.name, data.{col_country}, data.{col_value}{cols_interactive} "\
+               f"FROM {table_name} data "\
+               f"LEFT OUTER JOIN wri_countries_a wri ON wri.iso_a3 ILIKE TRIM(data.{col_country}) "\
+               f"WHERE data.{col_value} IS NOT NULL AND wri.iso_a3 IS NOT NULL "\
+               "UNION "\
+               f"SELECT wri.cartodb_id, ST_Transform(wri.the_geom, 3857) AS the_geom_webmercator, wri.name, data.{col_country}, data.{col_value}{cols_interactive} "\
+               f"FROM {table_name} data "\
+               f"INNER JOIN rw_aliasing_countries aliasing ON TRIM(data.{col_country}) ILIKE aliasing.alias "\
+               "INNER JOIN wri_countries_a wri ON wri.iso_a3 = aliasing.iso "\
+               f"WHERE data.{col_value} IS NOT NULL"
+    if (join_WRI_shape == False and timeline == True):
+        return f"SELECT * FROM {table_name} data"\
+               f"WHERE EXTRACT(YEAR FROM data.{col_datetime}) = {year} AND data.{col_value} IS NOT NULL"
+    if (join_WRI_shape == False and timeline == False):
+        return f"SELECT * FROM {table_name}"
+
+def fetch_carto():
+    '''
+    fetch Carto table
+    OUTPUT carto table as a pandas dataframe
+    '''
+    sql = create_sql(timeline, year, join_WRI_shape, table_name, col_value, col_datetime, col_country, col_interactive)
+    r = cartosql.get(sql, user=CARTO_USER, key=CARTO_KEY).text
+    df_dict = json.loads(r)
+    df_carto = pd.DataFrame(df_dict['rows'])
+
+    return df_carto
+
+def set_breaks(col_value, num_break, break_method, selected_breaks, break_type):
+    '''
+    set up break points
+    INPUT  col_value: the column the unique values or gradient values are based on
+           num_break: number of breaks
+           break_method: break method (for gradient breaks)
+           selected_breaks: the manully setted break points
+           break_type: break type ('basic', 'unique', or 'choropleth')
+    OUTPUT the break points saved in a list
+    '''
+    df_carto = fetch_carto()
+    if break_type == 'choropleth':
+        if break_method!='Manual':
+            if break_method == 'Jenks':
+                bin = mapclassify.JenksCaspall(df_carto[str(col_value)], k = num_break)
+            if break_method == 'EqualIntervals':
+                bin = mapclassify.EqualInterval(df_carto[str(col_value)], k = num_break)
+            if break_method == "Quantiles":
+                bin = mapclassify.Quantiles(df_carto[str(col_value)], k = num_break)
+            final_breaks = [round(num, 2) for num in bin.bins]
+        else:
+            final_breaks = selected_breaks
+        return final_breaks
+    if break_type == 'unique':
+        if break_method!='Manual':
+            final_breaks = pd.unique(df_carto[col_value])
+        else:
+            final_breaks = selected_breaks
+        return final_breaks
+    if break_type == 'basic':
+        final_breaks = selected_breaks
+        return final_breaks
+
+def create_cartocss(table_name, break_method, colors, break_type):
+    '''
+    create cartocss
+    INPUT  table_name: name of the Carto table
+           break_method: break method (for gradient breaks)
+           colors: the list of color(s)
+           break_type: break type ('basic', 'unique', or 'choropleth')
+    OUTPUT the cartocss statement
+    '''
+    final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+
+    if break_type == 'choropleth':
+        cartocss = f"#{table_name} "\
+                "{polygon-opacity: 1; line-width: 0.3; line-color: #FFF; line-opacity: 1;} "
+        for i in range(num_break):
+            if i == 0:
+                cartocss = cartocss + f"[{col_value}<{final_breaks[i]}]"+"{polygon-fill:"+f"{colors[i]}"+";} "
+            else:
+                cartocss = cartocss + f"[{col_value}>={final_breaks[i-1]}][{col_value}<{final_breaks[i]}]"+"{polygon-fill:"+f"{colors[i]}"+";} "
+        return cartocss
+    if break_type == 'unique':
+        cartocss = f"#{table_name} "\
+                "{polygon-opacity: 1; line-width: 0.3; line-color: #FFF; line-opacity: 1;} "
+        for i in range(num_break):
+                cartocss = cartocss + f"[{col_value}={final_breaks[i]}]"+"{polygon-fill:"+f"{colors[i]}"+";} "
+        return cartocss
+    if break_type == 'basic':
+        cartocss = f"#{table_name} "\
+                "{polygon-fill:"+f"{colors[0]}"+"; polygon-opacity: 1; line-width: 0.3; line-color: #FFF; line-opacity: 1;} "
+        return cartocss
+
+def create_layers(table_name):
+    '''
+    create layers json
+    INPUT  table_name: name of the Carto table
+    OUTPUT layers json
+    '''
+    cartocss = create_cartocss(table_name, break_method, colors, break_type)
+    sql = create_sql(timeline, year, join_WRI_shape, table_name, col_value, col_datetime, col_country, col_interactive)
+    return {
+        "options": {
+            "cartocss_version": "2.3.0",
+            "cartocss": f"{cartocss}",
+            "sql": f"{sql}"
+        },
+        "type": "mapnik"
+    }
+
+
+def create_vectorLayers(col_value, break_type):
+    '''
+    create vectorlayers json
+    INPUT  col_value: the column the unique values or gradient values are based on
+           break_type: break type ('basic', 'unique', or 'choropleth')
+    OUTPUT vectorlayers json
+    '''
+    if break_type == 'choropleth':
+        final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+        fill_color = ["step", ["to-number",["get", f"{col_value}"]], colors[0]]
+        for color, selected_break in zip(colors[1:], final_breaks[:-1]):
+            fill_color.append(selected_break)
+            fill_color.append(color)
+        return [{
+            "paint": {
+                "fill-color": fill_color,
+                "fill-opacity": 1
+            },
+            "source-layer": "layer0",
+            "type": "fill",
+                            "filter": [
+                                "all"
+            ]
+        }]
+    if break_type == 'unique':
+        final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+        vectorLayers = [{"paint": {"fill-opacity": 1},"source-layer": "layer0","type": "fill","filter": ["all"]}]
+        for color, selected_break in zip(colors, final_breaks):
+            vectorLayers.append({"paint": {"fill-color": f'{color}'},"source-layer": "layer0","type": "fill","filter": ["all",["==", f"{col_value}", selected_break]]})
+        return vectorLayers
+    if break_type == 'basic':
+        vectorLayers = [{"paint": {"fill-color": f"{colors[0]}","fill-opacity": 1},"source-layer": "layer0","type": "fill","filter": ["all"]}]
+        return vectorLayers
+
+def create_boundary():
+    '''
+    create the boundary json
+    '''
+    return {
+        "paint": {
+            "line-width": 0.3,
+            "line-color": "#fff",
+            "line-opacity": 1
+        },
+        "source-layer": "layer0",
+        "type": "line",
+        "filter": [
+            "all"
+        ]
+    }
+
+def create_layer_config():
+    '''
+    create layer config
+    '''
+    layer_config = create_headers(timeline, year)
+    layer_config["body"] = {
+        "layers": [create_layers(table_name)], 
+        "maxzoom": 18, 
+        "vectorLayers": create_vectorLayers(col_value, break_type).append(create_boundary())
+        }
+    return layer_config
+
+def create_legend_config(break_type):
+    '''
+    create legend config
+    '''
+    final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+    items = []
+    if break_type == 'choropleth':
+        for id, (selected_break, color) in enumerate(zip(final_breaks,colors)):
+            items.append({
+                "name": f"<{selected_break}",
+                "color": color,
+                "id": id
+            })
+    if break_type == 'unique' or break_type == 'basic':
+        for id, (selected_break, color) in enumerate(zip(final_breaks,colors)):
+            items.append({
+                "name": f"{selected_break}",
+                "color": color,
+                "id": id
+            })
+    return {
+        "type": break_type,
+        "items" : items
+    }
+
+def main():
+    '''
+    main function
+    OUTPUT print out layer config json and legend config json
+    '''
+    layer_config = create_layer_config()
+    legend_config = create_legend_config(break_type)
+    print("Layer config\n")
+    print(json.dumps(layer_config)+"\n")
+    print("Legend config\n")
+    print(json.dumps(legend_config))
+
+'''
+Run main function
+'''
+main()
