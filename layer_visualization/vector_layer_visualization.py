@@ -190,15 +190,17 @@ def set_breaks(col_value, num_break, break_method, selected_breaks, break_type):
         final_breaks = selected_breaks
         return final_breaks
 
-def create_cartocss(table_name, break_method, colors, break_type):
+def create_cartocss_polygon(table_name, break_method, colors, break_type):
     '''
-    create cartocss
+    create cartocss for polygon layer
     INPUT  table_name: name of the Carto table
            break_method: break method (for gradient breaks)
            colors: the list of color(s)
            break_type: break type ('basic', 'unique', or 'choropleth')
     OUTPUT the cartocss statement
+    * polygon boundary was set to white with 0.3 line-width by default
     '''
+
     final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
 
     if break_type == 'choropleth':
@@ -221,13 +223,83 @@ def create_cartocss(table_name, break_method, colors, break_type):
                 "{polygon-fill:"+f"{colors[0]}"+"; polygon-opacity: 1; line-width: 0.3; line-color: #FFF; line-opacity: 1;} "
         return cartocss
 
-def create_layers(table_name):
+def create_cartocss_line(table_name, break_method, colors, break_type):
+    '''
+    create cartocss for line layer
+    INPUT  table_name: name of the Carto table
+           break_method: break method (for gradient breaks)
+           colors: the list of color(s)
+           break_type: break type ('basic', 'unique', or 'choropleth')
+    OUTPUT the cartocss statement
+    * line-width set to 1.5 by default
+    '''
+    final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+
+    if break_type == 'choropleth':
+        cartocss = f"#{table_name} "\
+                "{line-width: 1.5; line-opacity: 1; line-comp-op: screen;} "
+        for i in range(num_break):
+            if i == 0:
+                cartocss = cartocss + f"[{col_value}<{final_breaks[i]}]"+"{line-color:"+f"{colors[i]}"+";} "
+            else:
+                cartocss = cartocss + f"[{col_value}>={final_breaks[i-1]}][{col_value}<{final_breaks[i]}]"+"{line-color:"+f"{colors[i]}"+";} "
+        return cartocss
+    if break_type == 'unique':
+        cartocss = f"#{table_name} "\
+                "{line-width: 1.5; line-opacity: 1; line-comp-op: screen;} "
+        for i in range(num_break):
+                cartocss = cartocss + f"[{col_value}={final_breaks[i]}]"+"{line-color:"+f"{colors[i]}"+";} "
+        return cartocss
+    if break_type == 'basic':
+        cartocss = f"#{table_name} "\
+                "{line-color:"+f"{colors[0]}"+"; line-width: 1.5; line-opacity: 1; line-comp-op: screen;} "
+        return cartocss
+
+def create_cartocss_point(table_name, break_method, colors, break_type):
+    '''
+    create cartocss for point layer
+    INPUT  table_name: name of the Carto table
+           break_method: break method (for gradient breaks)
+           colors: the list of color(s)
+           break_type: break type ('basic', 'unique', or 'choropleth')
+    OUTPUT the cartocss statement
+    * point boundary was set to white with 0.3 line-width by default
+    '''
+    final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+
+    if break_type == 'choropleth':
+        cartocss = f"#{table_name} "\
+                "{marker-fill-opacity: 1; marker-line-width: 0.3; marker-line-color: #FFF; marker-line-opacity: 1; marker-allow-overlap: true;} "
+        for i in range(num_break):
+            if i == 0:
+                cartocss = cartocss + f"[{col_value}<{final_breaks[i]}]"+"{marker-fill:"+f"{colors[i]}"+";} "
+            else:
+                cartocss = cartocss + f"[{col_value}>={final_breaks[i-1]}][{col_value}<{final_breaks[i]}]"+"{marker-fill:"+f"{colors[i]}"+";} "
+        return cartocss
+    if break_type == 'unique':
+        cartocss = f"#{table_name} "\
+                "{marker-fill-opacity: 1; marker-line-width: 0.3; marker-line-color: #FFF; marker-line-opacity: 1; marker-allow-overlap: true;} "
+        for i in range(num_break):
+                cartocss = cartocss + f"[{col_value}={final_breaks[i]}]"+"{marker-fill:"+f"{colors[i]}"+";} "
+        return cartocss
+    if break_type == 'basic':
+        cartocss = f"#{table_name} "\
+                "{marker-fill:"+f"{colors[0]}"+"; marker-fill-opacity: 1; marker-line-width: 0.3; marker-line-color: #FFF; marker-line-opacity: 1; marker-allow-overlap: true;} "
+        return cartocss
+
+def create_layers(table_name, geo_type):
     '''
     create layers json
     INPUT  table_name: name of the Carto table
     OUTPUT layers json
     '''
-    cartocss = create_cartocss(table_name, break_method, colors, break_type)
+    if geo_type == 'polygon':
+        cartocss = create_cartocss_polygon(table_name, break_method, colors, break_type)
+    elif geo_type == 'line':
+        cartocss = create_cartocss_line(table_name, break_method, colors, break_type)
+    elif geo_type == 'point':
+        cartocss = create_cartocss_point(table_name, break_method, colors, break_type)
+
     sql = create_sql(timeline, year, join_WRI_shape, table_name, col_value, col_datetime, col_country, col_interactive)
     return {
         "options": {
@@ -238,10 +310,9 @@ def create_layers(table_name):
         "type": "mapnik"
     }
 
-
-def create_vectorLayers(col_value, break_type):
+def create_vectorLayers_polygon(col_value, break_type):
     '''
-    create vectorlayers json
+    create vectorlayers json for polygon layer
     INPUT  col_value: the column the unique values or gradient values are based on
            break_type: break type ('basic', 'unique', or 'choropleth')
     OUTPUT vectorlayers json
@@ -259,8 +330,8 @@ def create_vectorLayers(col_value, break_type):
             },
             "source-layer": "layer0",
             "type": "fill",
-                            "filter": [
-                                "all"
+            "filter": [
+                "all"
             ]
         }]
     if break_type == 'unique':
@@ -273,9 +344,96 @@ def create_vectorLayers(col_value, break_type):
         vectorLayers = [{"paint": {"fill-color": f"{colors[0]}","fill-opacity": 1},"source-layer": "layer0","type": "fill","filter": ["all"]}]
         return vectorLayers
 
+def create_vectorLayers_line(col_value, break_type):
+    '''
+    create vectorlayers json for line layer
+    INPUT  col_value: the column the unique values or gradient values are based on
+           break_type: break type ('basic', 'unique', or 'choropleth')
+    OUTPUT vectorlayers json
+    * line width was set to 1.5 by default
+    '''
+    if break_type == 'choropleth':
+        final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+        line_color = ["step", ["to-number",["get", f"{col_value}"]], colors[0]]
+        for color, selected_break in zip(colors[1:], final_breaks[:-1]):
+            line_color.append(selected_break)
+            line_color.append(color)
+        return [{
+            "paint": {
+                "line-color": line_color,
+                "line-width": 1.5,
+                "line-opacity": 1
+            },
+            "source-layer": "layer0",
+            "type": "line",
+            "filter": [
+                "all"
+            ]
+        }]
+    if break_type == 'unique':
+        final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+        vectorLayers = []
+        for color, selected_break in zip(colors, final_breaks):
+            vectorLayers.append({"paint": {"line-color": f'{color}', "line-width":1.5, "line-opacity": 1},"source-layer": "layer0","type": "line","filter": ["all",["==", f"{col_value}", selected_break]]})
+        return vectorLayers
+    if break_type == 'basic':
+        vectorLayers = [{"paint": {"line-color": f"{colors[0]}", "line-width":1.5, "line-opacity": 1},"source-layer": "layer0","type": "line","filter": ["all"]}]
+        return vectorLayers
+
+def create_vectorLayers_point(col_value, break_type):
+    '''
+    create vectorlayers json for point layer
+    INPUT  col_value: the column the unique values or gradient values are based on
+           break_type: break type ('basic', 'unique', or 'choropleth')
+    OUTPUT vectorlayers json
+    * circle stroke width/color/opacity could be modified mannually
+    '''
+    if break_type == 'choropleth':
+        final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+        circle_color = ["step", ["to-number",["get", f"{col_value}"]], colors[0]]
+        for color, selected_break in zip(colors[1:], final_breaks[:-1]):
+            circle_color.append(selected_break)
+            circle_color.append(color)
+        return [{
+            "paint": {
+                "circle-color": circle_color,
+                "circle-opacity": 1,
+                "circle-stroke-width": 0.3,
+                "circle-stroke-color": "#FFF",
+                "circle-stroke-opacity": 0
+            },
+            "source-layer": "layer0",
+            "type": "circle",
+            "filter": [
+                "all"
+            ]
+        }]
+    if break_type == 'unique':
+        final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
+        vectorLayers = [{
+            "paint": {
+                "circle-opacity": 1,
+                "circle-stroke-width": 0.3,
+                "circle-stroke-color": "#FFF",
+                "circle-stroke-opacity": 0
+            },
+            "source-layer": "layer0",
+            "type": "circle",
+            "filter": [
+                "all"
+            ]
+        }]
+        for color, selected_break in zip(colors, final_breaks):
+            vectorLayers.append({"paint": {"circle-color": f'{color}'},"source-layer": "layer0","type": "circle","filter": ["all",["==", f"{col_value}", selected_break]]})
+        return vectorLayers
+    if break_type == 'basic':
+        vectorLayers = [{"paint": {"circle-color": f"{colors[0]}","circle-opacity": 1,"circle-stroke-width": 0.3,"circle-stroke-color": "#FFF","circle-stroke-opacity": 0},"source-layer": "layer0","type": "circle","filter": ["all"]}]
+        return vectorLayers
+
 def create_boundary():
     '''
-    create the boundary json
+    create the boundary json for polygon layer
+    * polygon boundary was set to white with 0.3 line-width
     '''
     return {
         "paint": {
@@ -290,15 +448,22 @@ def create_boundary():
         ]
     }
 
-def create_layer_config():
+def create_layer_config(geo_type):
     '''
     create layer config
     '''
     layer_config = create_headers(timeline, year)
+    if geo_type == 'polygon':
+        vectorLayer = create_vectorLayers_polygon(col_value, break_type).append(create_boundary())
+    elif geo_type == 'line':
+        vectorLayer = create_vectorLayers_line(col_value, break_type)
+    elif geo_type == 'point':
+        vectorLayer = create_vectorLayers_point(col_value, break_type)
+
     layer_config["body"] = {
         "layers": [create_layers(table_name)], 
         "maxzoom": 18, 
-        "vectorLayers": create_vectorLayers(col_value, break_type).append(create_boundary())
+        "vectorLayers": vectorLayer
         }
     return layer_config
 
@@ -332,7 +497,7 @@ def main():
     main function
     OUTPUT print out layer config json and legend config json
     '''
-    layer_config = create_layer_config()
+    layer_config = create_layer_config(geo_type)
     legend_config = create_legend_config(break_type)
     print("Layer config\n")
     print(json.dumps(layer_config)+"\n")
