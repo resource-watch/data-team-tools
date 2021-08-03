@@ -1,14 +1,17 @@
 #Import necessary layers
 import os
-from IPython.display import display
-from pprint import pprint
 import json
 import cartosql
-from numpy.lib.arraysetops import unique
 import pandas as pd
 import mapclassify
 from colour import Color
 import json
+import time 
+import logging
+import sys
+
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+
 
 # username and api key of the carto account 
 CARTO_USER = os.getenv('CARTO_WRI_RW_USER')
@@ -17,14 +20,14 @@ CARTO_KEY = os.getenv('CARTO_WRI_RW_KEY')
 '''
 Set up parameters for dataset
 '''
-# name of table on Carto which you want to create map
+# name of table on Carto which you want to make the visualization
 # this should be a table name that is currently in use
 table_name = 'soc_039_rw1_out_of_school_rate_edit'
 
-# if the dataset has a time line, set timeline = True
+# if the dataset has a timeline, set timeline = True
 # otherwise, set timeline = False
 timeline = True
-# if timeline is true, set the data year for making the map
+# if timeline is true, set the year for making the visualization
 # if timeline is false, the year variable wont't be used, but don't comment it out
 year = 2018
 
@@ -35,7 +38,7 @@ geo_type = 'polygon' # 'polygon', 'line', or 'point'
 # basic - if use only one color
 # unique - if the colors are determined by unique values
 # choropleth - if use gradient colors determined by values
-break_type = 'basic' # 'basic', 'unique', or 'choroleth'
+break_type = 'choropleth' # 'basic', 'unique', or 'choropleth'
 
 # number of unique values/number of gradient breaks
 # if break_type is 'basic', the num_break variable wont't be used, but don't comment it out
@@ -53,19 +56,19 @@ colors = [color.hex_l for color in list(Color("white").range_to(Color("pink"), n
 # if the break_type is 'choropleth', you have to choose a break_method below
 # if break_type is 'basic' or 'unique', the break_method variable wont't be used, but don't comment it out
 break_method = 'Quantiles' # 'Jenks', 'EqualIntervals', 'Quantiles', or 'Manual'
-# if break_method is 'Manual', you have to manually put the break points in the list below
-# if break_method is nor 'Manual', the selected_breaks variable wont't be used, but don't comment it out
+# if break_method is 'Manual', you have to manually set the break points in the list below
+# if break_method is not 'Manual', the selected_breaks variable wont't be used, but don't comment it out
 selected_breaks = [] # e.g. [100,200,300,400,500]
 
 # if need to join dataset with WRI shapefile
 join_WRI_shape = True
 
 # fetch columns
-# name of the value column, which the unique values or gradient values are based on 
+# name of the value column, which has the unique values or gradient values 
 col_value = 'value'
-# name of the datetime column, which the timestamp is based on
+# name of the datetime column, which has the timestamps
 col_datetime = 'datetime'
-# name the country column, which the country name are based on (when join with the wri shapefile)
+# name of the country column, which has the country names (used to join with the wri shapefile)
 col_country = 'location'
 # name of other columns that you want to included in the final table (e.g. need more columns for interaction)
 # if you don't need any other columns, keep the col_interactive as a blank list
@@ -151,8 +154,18 @@ def fetch_carto():
     OUTPUT carto table as a pandas dataframe
     '''
     sql = create_sql(timeline, year, join_WRI_shape, table_name, col_value, col_datetime, col_country, col_interactive)
-    r = cartosql.get(sql, user=CARTO_USER, key=CARTO_KEY).text
-    df_dict = json.loads(r)
+    try_num = 1
+    while try_num <= 3:
+        try: 
+            # convert response into json and make dictionary of layers
+            r = cartosql.get(sql, user=CARTO_USER, key=CARTO_KEY).text
+            df_dict = json.loads(r)
+            break
+        except:
+            logging.info("Failed to fetch layers. Trying again after 30 seconds.")
+            time.sleep(30)
+            try_num += 1
+    
     df_carto = pd.DataFrame(df_dict['rows'])
 
     return df_carto
@@ -172,23 +185,21 @@ def set_breaks(col_value, num_break, break_method, selected_breaks, break_type):
         if break_method!='Manual':
             if break_method == 'Jenks':
                 bin = mapclassify.JenksCaspall(df_carto[str(col_value)], k = num_break)
-            if break_method == 'EqualIntervals':
+            elif break_method == 'EqualIntervals':
                 bin = mapclassify.EqualInterval(df_carto[str(col_value)], k = num_break)
-            if break_method == "Quantiles":
+            elif break_method == "Quantiles":
                 bin = mapclassify.Quantiles(df_carto[str(col_value)], k = num_break)
             final_breaks = [round(num, 2) for num in bin.bins]
         else:
             final_breaks = selected_breaks
-        return final_breaks
-    if break_type == 'unique':
+    elif break_type == 'unique':
         if break_method!='Manual':
             final_breaks = pd.unique(df_carto[col_value])
         else:
             final_breaks = selected_breaks
-        return final_breaks
-    if break_type == 'basic':
+    elif break_type == 'basic':
         final_breaks = selected_breaks
-        return final_breaks
+    return final_breaks
 
 def create_cartocss_polygon(table_name, break_method, colors, break_type):
     '''
@@ -461,7 +472,7 @@ def create_layer_config(geo_type):
         vectorLayer = create_vectorLayers_point(col_value, break_type)
 
     layer_config["body"] = {
-        "layers": [create_layers(table_name)], 
+        "layers": [create_layers(table_name, geo_type)], 
         "maxzoom": 18, 
         "vectorLayers": vectorLayer
         }
@@ -495,12 +506,19 @@ def create_legend_config(break_type):
 def main():
     '''
     main function
-    OUTPUT print out layer config json and legend config json
+    OUTPUT print out SQL, CartoCSS, layer config json, and legend config json
     '''
+    
+    layer = create_layers(table_name, geo_type)
+    print("SQL\n")
+    print(layer['options']['sql'] + "\n")
+    print("CartoCSS\n")
+    print(layer['options']['cartocss'] + "\n")
+
     layer_config = create_layer_config(geo_type)
     legend_config = create_legend_config(break_type)
     print("Layer config\n")
-    print(json.dumps(layer_config)+"\n")
+    print(json.dumps(layer_config) + "\n")
     print("Legend config\n")
     print(json.dumps(legend_config))
 
