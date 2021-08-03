@@ -1,4 +1,4 @@
-**Layer Visualization**
+# Layer Visualization
 
 This folder contains the tools used to aid in designing visualizations for datasets on Resource Watch. Each tool gives you instructions within on how to run them.
 
