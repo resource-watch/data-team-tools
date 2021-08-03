@@ -302,6 +302,7 @@ def create_layers(table_name, geo_type):
     '''
     create layers json
     INPUT  table_name: name of the Carto table
+           geo_type: geometry type 
     OUTPUT layers json
     '''
     if geo_type == 'polygon':
@@ -462,6 +463,8 @@ def create_boundary():
 def create_layer_config(geo_type):
     '''
     create layer config
+    INPUT  geo_type: geometry type
+    OUTPUT layer config json
     '''
     layer_config = create_headers(timeline, year)
     if geo_type == 'polygon':
@@ -481,6 +484,8 @@ def create_layer_config(geo_type):
 def create_legend_config(break_type):
     '''
     create legend config
+    INPUT  break_type: break type ('basic', 'unique', or 'choropleth')
+    OUTPUT layer config json
     '''
     final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
     items = []
