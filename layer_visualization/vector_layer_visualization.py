@@ -222,17 +222,16 @@ def create_cartocss_polygon(table_name, break_method, colors, break_type):
                 cartocss = cartocss + f"[{col_value}<{final_breaks[i]}]"+"{polygon-fill:"+f"{colors[i]}"+";} "
             else:
                 cartocss = cartocss + f"[{col_value}>={final_breaks[i-1]}][{col_value}<{final_breaks[i]}]"+"{polygon-fill:"+f"{colors[i]}"+";} "
-        return cartocss
     if break_type == 'unique':
         cartocss = f"#{table_name} "\
                 "{polygon-opacity: 1; line-width: 0.3; line-color: #FFF; line-opacity: 1;} "
         for i in range(num_break):
                 cartocss = cartocss + f"[{col_value}={final_breaks[i]}]"+"{polygon-fill:"+f"{colors[i]}"+";} "
-        return cartocss
     if break_type == 'basic':
         cartocss = f"#{table_name} "\
                 "{polygon-fill:"+f"{colors[0]}"+"; polygon-opacity: 1; line-width: 0.3; line-color: #FFF; line-opacity: 1;} "
-        return cartocss
+    
+    return cartocss
 
 def create_cartocss_line(table_name, break_method, colors, break_type):
     '''
@@ -254,17 +253,16 @@ def create_cartocss_line(table_name, break_method, colors, break_type):
                 cartocss = cartocss + f"[{col_value}<{final_breaks[i]}]"+"{line-color:"+f"{colors[i]}"+";} "
             else:
                 cartocss = cartocss + f"[{col_value}>={final_breaks[i-1]}][{col_value}<{final_breaks[i]}]"+"{line-color:"+f"{colors[i]}"+";} "
-        return cartocss
     if break_type == 'unique':
         cartocss = f"#{table_name} "\
                 "{line-width: 1.5; line-opacity: 1; line-comp-op: screen;} "
         for i in range(num_break):
                 cartocss = cartocss + f"[{col_value}={final_breaks[i]}]"+"{line-color:"+f"{colors[i]}"+";} "
-        return cartocss
     if break_type == 'basic':
         cartocss = f"#{table_name} "\
                 "{line-color:"+f"{colors[0]}"+"; line-width: 1.5; line-opacity: 1; line-comp-op: screen;} "
-        return cartocss
+    
+    return cartocss
 
 def create_cartocss_point(table_name, break_method, colors, break_type):
     '''
@@ -286,17 +284,16 @@ def create_cartocss_point(table_name, break_method, colors, break_type):
                 cartocss = cartocss + f"[{col_value}<{final_breaks[i]}]"+"{marker-fill:"+f"{colors[i]}"+";} "
             else:
                 cartocss = cartocss + f"[{col_value}>={final_breaks[i-1]}][{col_value}<{final_breaks[i]}]"+"{marker-fill:"+f"{colors[i]}"+";} "
-        return cartocss
     if break_type == 'unique':
         cartocss = f"#{table_name} "\
                 "{marker-fill-opacity: 1; marker-line-width: 0.3; marker-line-color: #FFF; marker-line-opacity: 1; marker-allow-overlap: true;} "
         for i in range(num_break):
                 cartocss = cartocss + f"[{col_value}={final_breaks[i]}]"+"{marker-fill:"+f"{colors[i]}"+";} "
-        return cartocss
     if break_type == 'basic':
         cartocss = f"#{table_name} "\
                 "{marker-fill:"+f"{colors[0]}"+"; marker-fill-opacity: 1; marker-line-width: 0.3; marker-line-color: #FFF; marker-line-opacity: 1; marker-allow-overlap: true;} "
-        return cartocss
+    
+    return cartocss
 
 def create_layers(table_name, geo_type):
     '''
@@ -479,6 +476,7 @@ def create_layer_config(geo_type):
         "maxzoom": 18, 
         "vectorLayers": vectorLayer
         }
+
     return layer_config
 
 def create_legend_config(break_type):
@@ -513,7 +511,6 @@ def main():
     main function
     OUTPUT print out SQL, CartoCSS, layer config json, and legend config json
     '''
-    
     layer = create_layers(table_name, geo_type)
     print("SQL\n")
     print(layer['options']['sql'] + "\n")
