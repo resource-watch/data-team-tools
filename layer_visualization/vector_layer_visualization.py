@@ -68,10 +68,10 @@ join_WRI_shape = True
 # name of the value column, which has the unique values or gradient values 
 col_value = 'value'
 # name of the datetime column, which has the timestamps
-# if timeline is FALSE, 'col_datetime' wont't be used, you can leave it blank, but don't comment it out
+# if timeline is FALSE, col_datetime won't be used, you can leave it blank, but don't comment it out
 col_datetime = 'datetime'
 # name of the country column, which has the country names (used to join with the wri shapefile)
-# if join_WRI_shape is FALSE, 'col_country' wont't be used, you can leave it blank, but don't comment it out
+# if join_WRI_shape is FALSE, col_country won't be used, you can leave it blank, but don't comment it out
 col_country = 'location'
 # name of other columns that you want to included in the final table (e.g. need more columns for interaction)
 # if you don't need any other columns, keep the col_interactive as a blank list
@@ -84,8 +84,8 @@ Define functions
 def create_headers(timeline, year):
     '''
     creat layer config header
-    INPUT  timeline: if the dataset has a timeline or not
-           year: if the dataset has a timeline, the year that used to create the map
+    INPUT  timeline: if the dataset has a timeline or not (Bool)
+           year: if the dataset has a timeline, the year that used to create the map (Number)
     OUTPUT layer config header
     '''
     if timeline == True:
@@ -105,14 +105,14 @@ def create_headers(timeline, year):
 def create_sql(timeline, year, join_WRI_shape, table_name, col_value, col_datetime, col_country, col_interactive):
     '''
     create sql statement to tell what data to pull from Carto
-    INPUT  timeline: if the dataset has a timeline
-           year: use which year of the data to create the map
-           join_WRI_shape: if the dateset need to be joined with WRI shapefile
-           table_name: name of the Carto table
-           col_value: the column the unique values or gradient values are based on
-           col_datetime: the column the timestamp is based on
-           col_country: the column the country name are based on (when join with the wri shapefile)
-           col_interactive: name of other columns that you want to included in the sql query
+    INPUT  timeline: if the dataset has a timeline (Bool)
+           year: use which year of the data to create the map (Number)
+           join_WRI_shape: if the dateset need to be joined with WRI shapefile (Bool)
+           table_name: name of the Carto table (String)
+           col_value: the column the unique values or gradient values are based on (String)
+           col_datetime: the column the timestamp is based on (String)
+           col_country: the column the country name are based on (when join with the wri shapefile) (String)
+           col_interactive: name of other columns that you want to included in the sql query (List)
     OUTPUT the sql statement 
     '''
     if len(col_interactive)>0:
@@ -175,11 +175,11 @@ def fetch_carto():
 def set_breaks(col_value, num_break, break_method, selected_breaks, break_type):
     '''
     set up break points
-    INPUT  col_value: the column the unique values or gradient values are based on
-           num_break: number of breaks
-           break_method: break method (for gradient breaks)
-           selected_breaks: the manully setted break points
-           break_type: break type ('basic', 'unique', or 'choropleth')
+    INPUT  col_value: the column the unique values or gradient values are based on (String)
+           num_break: number of breaks (Number)
+           break_method: break method (for gradient breaks) (String)
+           selected_breaks: the manully setted break points (List)
+           break_type: break type ('basic', 'unique', or 'choropleth') (String)
     OUTPUT the break points saved in a list
     '''
     df_carto = fetch_carto()
@@ -206,14 +206,13 @@ def set_breaks(col_value, num_break, break_method, selected_breaks, break_type):
 def create_cartocss_polygon(table_name, break_method, colors, break_type):
     '''
     create cartocss for polygon layer
-    INPUT  table_name: name of the Carto table
-           break_method: break method (for gradient breaks)
-           colors: the list of color(s)
-           break_type: break type ('basic', 'unique', or 'choropleth')
+    INPUT  table_name: name of the Carto table (String)
+           break_method: break method (for gradient breaks) (String)
+           colors: the list of color(s) (List)
+           break_type: break type ('basic', 'unique', or 'choropleth') (String)
     OUTPUT the cartocss statement
     * polygon boundary was set to white with 0.3 line-width by default
     '''
-
     final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
 
     if break_type == 'choropleth':
@@ -238,10 +237,10 @@ def create_cartocss_polygon(table_name, break_method, colors, break_type):
 def create_cartocss_line(table_name, break_method, colors, break_type):
     '''
     create cartocss for line layer
-    INPUT  table_name: name of the Carto table
-           break_method: break method (for gradient breaks)
-           colors: the list of color(s)
-           break_type: break type ('basic', 'unique', or 'choropleth')
+    INPUT  table_name: name of the Carto table (String)
+           break_method: break method (for gradient breaks) (String)
+           colors: the list of color(s) (List)
+           break_type: break type ('basic', 'unique', or 'choropleth') (String)
     OUTPUT the cartocss statement
     * line-width set to 1.5 by default
     '''
@@ -269,10 +268,10 @@ def create_cartocss_line(table_name, break_method, colors, break_type):
 def create_cartocss_point(table_name, break_method, colors, break_type):
     '''
     create cartocss for point layer
-    INPUT  table_name: name of the Carto table
-           break_method: break method (for gradient breaks)
-           colors: the list of color(s)
-           break_type: break type ('basic', 'unique', or 'choropleth')
+    INPUT  table_name: name of the Carto table (String)
+           break_method: break method (for gradient breaks) (String)
+           colors: the list of color(s) (List)
+           break_type: break type ('basic', 'unique', or 'choropleth') (String)
     OUTPUT the cartocss statement
     * point boundary was set to white with 0.3 line-width by default
     '''
@@ -300,8 +299,8 @@ def create_cartocss_point(table_name, break_method, colors, break_type):
 def create_layers(table_name, geo_type):
     '''
     create layers json
-    INPUT  table_name: name of the Carto table
-           geo_type: geometry type 
+    INPUT  table_name: name of the Carto table (String)
+           geo_type: geometry type (String)
     OUTPUT layers json
     '''
     if geo_type == 'polygon':
@@ -324,8 +323,8 @@ def create_layers(table_name, geo_type):
 def create_vectorLayers_polygon(col_value, break_type):
     '''
     create vectorlayers json for polygon layer
-    INPUT  col_value: the column the unique values or gradient values are based on
-           break_type: break type ('basic', 'unique', or 'choropleth')
+    INPUT  col_value: the column the unique values or gradient values are based on (String)
+           break_type: break type ('basic', 'unique', or 'choropleth') (String)
     OUTPUT vectorlayers json
     '''
     if break_type == 'choropleth':
@@ -358,8 +357,8 @@ def create_vectorLayers_polygon(col_value, break_type):
 def create_vectorLayers_line(col_value, break_type):
     '''
     create vectorlayers json for line layer
-    INPUT  col_value: the column the unique values or gradient values are based on
-           break_type: break type ('basic', 'unique', or 'choropleth')
+    INPUT  col_value: the column the unique values or gradient values are based on (String)
+           break_type: break type ('basic', 'unique', or 'choropleth') (String)
     OUTPUT vectorlayers json
     * line width was set to 1.5 by default
     '''
@@ -394,8 +393,8 @@ def create_vectorLayers_line(col_value, break_type):
 def create_vectorLayers_point(col_value, break_type):
     '''
     create vectorlayers json for point layer
-    INPUT  col_value: the column the unique values or gradient values are based on
-           break_type: break type ('basic', 'unique', or 'choropleth')
+    INPUT  col_value: the column the unique values or gradient values are based on (String)
+           break_type: break type ('basic', 'unique', or 'choropleth') (String)
     OUTPUT vectorlayers json
     * circle stroke width/color/opacity could be modified mannually
     '''
@@ -462,7 +461,7 @@ def create_boundary():
 def create_layer_config(geo_type):
     '''
     create layer config
-    INPUT  geo_type: geometry type
+    INPUT  geo_type: geometry type (String)
     OUTPUT layer config json
     '''
     layer_config = create_headers(timeline, year)
@@ -485,7 +484,7 @@ def create_layer_config(geo_type):
 def create_legend_config(break_type):
     '''
     create legend config
-    INPUT  break_type: break type ('basic', 'unique', or 'choropleth')
+    INPUT  break_type: break type ('basic', 'unique', or 'choropleth') (String)
     OUTPUT layer config json
     '''
     final_breaks = set_breaks(col_value, num_break, break_method, selected_breaks, break_type)
