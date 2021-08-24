@@ -9,6 +9,7 @@ import json
 import time 
 import logging
 import sys
+from IPython.display import display
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
@@ -22,7 +23,7 @@ Set up parameters for dataset
 '''
 # name of table on Carto which you want to make the visualization
 # this should be a table name that is currently in use
-table_name = 'soc_039_rw1_out_of_school_rate_edit'
+table_name = '' #e.g. 'soc_039_rw1_out_of_school_rate_edit'
 
 # if the dataset has a timeline, set timeline = True
 # otherwise, set timeline = False
@@ -45,12 +46,12 @@ break_type = 'choropleth' # 'basic', 'unique', or 'choropleth'
 num_break = 5 
 
 # set colors
+# helpful sources for color palette: https://colorbrewer2.org/, https://carto.com/carto-colors/
 # if break_type is 'basic', you have to manually set the color
 # colors = [''] # e.g. '#ffc0cb'
 # if break_type is 'unique' or 'choropleth', you can manually set the colors by the list, or use the function below to set the color ramp
 # colors = [''] # e.g. '#ffc0cb'
 colors = [color.hex_l for color in list(Color("white").range_to(Color("pink"), num_break))]
-
 
 # set break method
 # if the break_type is 'choropleth', you have to choose a break_method below
@@ -67,13 +68,14 @@ join_WRI_shape = True
 # name of the value column, which has the unique values or gradient values 
 col_value = 'value'
 # name of the datetime column, which has the timestamps
+# if timeline is FALSE, 'col_datetime' wont't be used, you can leave it blank, but don't comment it out
 col_datetime = 'datetime'
 # name of the country column, which has the country names (used to join with the wri shapefile)
+# if join_WRI_shape is FALSE, 'col_country' wont't be used, you can leave it blank, but don't comment it out
 col_country = 'location'
 # name of other columns that you want to included in the final table (e.g. need more columns for interaction)
 # if you don't need any other columns, keep the col_interactive as a blank list
 col_interactive = [] # e.g. 'time'
-# if join_WRI_shape or 'timeline' is false, some of the variables above wont't be used, but don't comment it out
 
 
 '''
@@ -465,7 +467,8 @@ def create_layer_config(geo_type):
     '''
     layer_config = create_headers(timeline, year)
     if geo_type == 'polygon':
-        vectorLayer = create_vectorLayers_polygon(col_value, break_type).append(create_boundary())
+        vectorLayer = create_vectorLayers_polygon(col_value, break_type)
+        vectorLayer.append(create_boundary())
     elif geo_type == 'line':
         vectorLayer = create_vectorLayers_line(col_value, break_type)
     elif geo_type == 'point':
@@ -512,17 +515,17 @@ def main():
     OUTPUT print out SQL, CartoCSS, layer config json, and legend config json
     '''
     layer = create_layers(table_name, geo_type)
-    print("SQL\n")
+    print("SQL:")
     print(layer['options']['sql'] + "\n")
-    print("CartoCSS\n")
+    print("CartoCSS:")
     print(layer['options']['cartocss'] + "\n")
 
     layer_config = create_layer_config(geo_type)
     legend_config = create_legend_config(break_type)
-    print("Layer config\n")
-    print(json.dumps(layer_config) + "\n")
-    print("Legend config\n")
-    print(json.dumps(legend_config))
+    print("Layer config:")
+    print(json.dumps(layer_config, indent=2) + "\n")
+    print("Legend config:")
+    print(json.dumps(legend_config, indent=2))
 
 '''
 Run main function
