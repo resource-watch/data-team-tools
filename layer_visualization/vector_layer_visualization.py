@@ -9,10 +9,8 @@ import json
 import time 
 import logging
 import sys
-from IPython.display import display
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
 
 # username and api key of the carto account 
 CARTO_USER = os.getenv('CARTO_WRI_RW_USER')
@@ -525,6 +523,7 @@ def main():
     print(json.dumps(layer_config, indent=2) + "\n")
     print("Legend config:")
     print(json.dumps(legend_config, indent=2))
+
 
 '''
 Run main function
