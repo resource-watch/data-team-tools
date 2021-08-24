@@ -27,7 +27,7 @@ To use these tools, you will want to follow these steps:
     - **join_WRI_shape** (*Bool*): If need to join dataset with WRI shapefile.
     - **col_value** (*String*): Name of the value column, which has the unique values or gradient values.
     - **col_datetime** (*String*): Name of the datetime column, which has the timestamps.
-    - **col_country** (*String*): Name of the country column, which has the country names(used to join with the wri shapefile).
+    - **col_country** (*String*): Name of the country column, which has the country names (used to join with the wri shapefile).
     - **col_interactive** (*List*): Name of other columns that you want to included in the final table (e.g. need more columns for interaction).
 3. Run the script to get the SQL, CartoCSS, Layer config, and Legend config.
 4. Create map on Carto:
