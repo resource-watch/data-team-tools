@@ -112,7 +112,7 @@ def request_pagePath(startDate, endDate):
           endDate: End date for request (string)
     '''
     # Variable to request full page path
-    DIMS = ['ga:pagePath'] # You can add up to 7 dimensions here: eg. 'month', 'year','country'
+    DIMS = ['ga:pagePath'] # You can add more dimensions here: eg. 'month', 'year','country'
     # Metrics that we are going to request
     METRICS = ['ga:pageviews', 'ga:uniquePageviews', 'ga:avgTimeOnPage',
                'ga:bounceRate','ga:entrances', 'ga:exitRate',
@@ -242,7 +242,7 @@ def request_eventLabel(startDate,endDate):
           endDate: End date for request (string)
     '''
     # We set the dimensions and variables that we will request
-    DIMS = ['ga:eventLabel','ga:eventAction']
+    DIMS = ['ga:eventLabel','ga:eventAction'] # You can add more dimensions here
     METRICS = ['ga:totalEvents']
     requests_list =  [{
         'viewId': view_id,
