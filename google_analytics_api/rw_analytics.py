@@ -8,8 +8,8 @@ import pandas as pd
 import io
 import logging
 import dotenv
-
-# Insert the location of your .env file here:
+#insert the location of your .env file here:
+dotenv.load_dotenv('/home/hastur_2021/documents/rw_github/cred/.env')
 
 
 # Set up logging
@@ -37,12 +37,15 @@ SERVICE = build('analytics', 'v4', http = HTTP, discoveryServiceUrl = DISCOVERY_
 
 # INPUTS
 # Enter dates to fetch from Analytics API
-startDate = '2020-10-31'
-endDate = '2021-10-31'
+startDate = '2020-12-14'
+endDate = '2021-12-14'
 
-# Name of google sheet where you're sending the pagePath data
+# Name of google sheet where you're sending all pagePath data
 # Change if you wish to create a new sheet
 rw_metrics_sheet = 'pagepath_metrics_sheet'
+# Name of google sheet where you're sending aggregated pagePath data
+# Change if you wish to create a new sheet
+rw_metrics_aggr_sheet = 'pagepath_metrics_aggregated_sheet'
 # Name of the two google sheet where you're sending the eventLabel and eventAction data
 # Change if you wish to create new sheets
 downloaded_from_rw = 'download_from_rw'
@@ -58,7 +61,7 @@ def write_to_gsheet(sheet_name, df):
     # Path to our creadentials
     service_file_path = os.path.abspath(os.getenv('SPREADSHEETS_APPLICATION_CREDENTIALS'))
     # Id of the spreadsheet we're using to store the analytics information
-    spreadsheet_id = os.getenv('DATA_CATALOGUE_ASSESSMENT_ID')
+    spreadsheet_id = os.getenv('DATA_CATALOGUE_ASSESMENT_ID')
     gc = pygsheets.authorize(service_file = service_file_path)
     sh = gc.open_by_key(spreadsheet_id)
     try:
@@ -231,7 +234,18 @@ def process_spreadsheet(df):
     rw_dataset_analytics['topic'] = rw_dataset_analytics['topic'].replace(topic_codes, regex = True)
     # Write pagePath dataframe to a new Google Spreadsheet
     write_to_gsheet(rw_metrics_sheet, rw_dataset_analytics)
-
+    # We create a version of the dataframe with aggregated metrics
+    rw_aggr_analytics = rw_dataset_analytics.copy()
+    # Drop columns thatwon't be used
+    rw_aggr_analytics.drop(['avgTimeOnPage', 'bounceRate', 'exitRate'], axis=1, inplace=True)
+    rw_aggr_analytics = rw_aggr_analytics.groupby(['API_ID'], as_index=False).agg({'pagePath': 'first', 'pageviews': 'sum', 'uniquePageviews':'sum','entrances': 'sum', 'startDate': 'first', 'endDate':'first','slug_or_id':'first',
+                                                                                   'rw_api_id':'first','dataset_name':'first','slug':'first',
+                                                                                   'published':'first','New WRI_ID':'first','Status':'first',
+                                                                                   'Public Title':'first','Date of Content':'first',
+                                                                                   'Frequency of Updates':'first','Data Type':'first','topic':'first'})
+    # Write aggregated pagePath dataframe to a new Google Spreadsheet
+    write_to_gsheet(rw_metrics_aggr_sheet, rw_aggr_analytics)
+    
     return rw_dataset_analytics
 
 def request_eventLabel(startDate,endDate):
