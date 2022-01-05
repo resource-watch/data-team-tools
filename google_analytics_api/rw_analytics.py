@@ -11,7 +11,6 @@ import dotenv
 #insert the location of your .env file here:
 
 
-
 # Set up logging
 # Get the top-level logger object
 logger = logging.getLogger()
@@ -50,6 +49,9 @@ rw_metrics_aggr_sheet = 'pagepath_metrics_aggregated_sheet'
 # Change if you wish to create new sheets
 downloaded_from_rw = 'download_from_rw'
 downloaded_from_source = 'download_from_source'
+# Name of the two google sheet where you're aggregated download activity
+# Change if you wish to create new sheets
+downloaded_aggr_sheet = 'download_aggregated_sheet'
 
 def write_to_gsheet(sheet_name, df):
     """
@@ -61,7 +63,7 @@ def write_to_gsheet(sheet_name, df):
     # Path to our creadentials
     service_file_path = os.path.abspath(os.getenv('SPREADSHEETS_APPLICATION_CREDENTIALS'))
     # Id of the spreadsheet we're using to store the analytics information
-    spreadsheet_id = os.getenv('DATA_CATALOGUE_ASSESMENT_ID')
+    spreadsheet_id = os.getenv('DATA_CATALOGUE_ASSESSMENT_ID')
     gc = pygsheets.authorize(service_file = service_file_path)
     sh = gc.open_by_key(spreadsheet_id)
     try:
@@ -238,6 +240,9 @@ def process_spreadsheet(df):
     rw_aggr_analytics = rw_dataset_analytics.copy()
     # Drop columns thatwon't be used
     rw_aggr_analytics.drop(['avgTimeOnPage', 'bounceRate', 'exitRate'], axis=1, inplace=True)
+    rw_aggr_analytics['pageviews'] = rw_aggr_analytics['pageviews'].astype(int)
+    rw_aggr_analytics['uniquePageviews'] = rw_aggr_analytics['uniquePageviews'].astype(int)
+    rw_aggr_analytics['entrances'] = rw_aggr_analytics['entrances'].astype(int)
     rw_aggr_analytics = rw_aggr_analytics.groupby(['API_ID'], as_index=False).agg({'pagePath': 'first', 'pageviews': 'sum', 'uniquePageviews':'sum','entrances': 'sum', 'startDate': 'first', 'endDate':'first','slug_or_id':'first',
                                                                                    'rw_api_id':'first','dataset_name':'first','slug':'first',
                                                                                    'published':'first','New WRI_ID':'first','Status':'first',
@@ -248,7 +253,7 @@ def process_spreadsheet(df):
     
     return rw_dataset_analytics
 
-def request_eventLabel(startDate,endDate):
+def request_eventLabel(startDate, endDate):
     '''
     This function requests the eventLabel and eventAction information from
     google analytics. In this way we can know which datasets are the most downloaded.
@@ -280,13 +285,29 @@ def request_eventLabel(startDate,endDate):
     # One dataset holds metrics for datasets downloaded directly from RW and the other those downloaded from the source site
     download_from_rw = merged.loc[merged['eventAction'] == 'Download Data']
     download_from_source = merged.loc[merged['eventAction'] == 'Download Data From Source']
+    # drop records that cannot be merged to the metadata spreadsheet
+    download_from_rw.dropna(subset=['API_ID'], inplace = True)
     # We reset the index and upload to google spreadsheet
     download_from_rw.reset_index(inplace = True, drop = True)
     write_to_gsheet(downloaded_from_rw, download_from_rw)
+    # drop records that cannot be merged to the metadata spreadsheet
+    download_from_source.dropna(subset=['API_ID'], inplace = True)
     # We reset the index and upload to google spreadsheet
     download_from_source.reset_index(inplace = True, drop = True)
     write_to_gsheet(downloaded_from_source, download_from_source)
-    
+    # We create a version of the dataframe with for aggregated metrics
+    download_aggr_sheet = download_from_rw.append(download_from_source)
+    # Drop columns thatwon't be used
+    download_aggr_sheet.drop(['eventAction'], axis = 1, inplace = True)
+    download_aggr_sheet['totalEvents'] = download_aggr_sheet['totalEvents'].astype(int)
+    download_aggr_sheet = download_aggr_sheet.groupby(['API_ID'], as_index=False).agg({'eventLabel': 'first', 'totalEvents':'sum','startDate': 'first', 'endDate':'first',
+                                                                                   'New WRI_ID':'first', 'Status':'first',
+                                                                                   'Public Title':'first','Date of Content':'first',
+                                                                                   'Frequency of Updates':'first','Data Type':'first'})
+    # We reset the index and upload to google spreadsheet
+    download_aggr_sheet.reset_index(inplace = True, drop = True)
+    write_to_gsheet(downloaded_aggr_sheet, download_aggr_sheet)
+
     return merged
 
 # Variable to request full page path
