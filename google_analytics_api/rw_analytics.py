@@ -9,6 +9,7 @@ import io
 import logging
 import dotenv
 #insert the location of your .env file here:
+dotenv.load_dotenv('/home/hastur_2021/documents/rw_github/cred/.env')
 
 
 # Set up logging
@@ -52,6 +53,15 @@ downloaded_from_source = 'download_from_source'
 # Name of the two google sheet where you're aggregated download activity
 # Change if you wish to create new sheets
 downloaded_aggr_sheet = 'download_aggregated_sheet'
+# Create a dictionary to replace topic codes 
+topic_codes = {"bio": "biodiversity","blo": "blog", "cit": "cities",
+               "cli": "climate","com": "commerce",
+               "dis": "disaster","ene": "energy", 
+               "foo": "food and agriculture",  "for": "forests", 
+               "loc": "local data", "req": "request",
+               "soc": "society", "ocn": "ocean", 
+               "wat": "water"}
+
 
 def write_to_gsheet(sheet_name, df):
     """
@@ -63,7 +73,7 @@ def write_to_gsheet(sheet_name, df):
     # Path to our creadentials
     service_file_path = os.path.abspath(os.getenv('SPREADSHEETS_APPLICATION_CREDENTIALS'))
     # Id of the spreadsheet we're using to store the analytics information
-    spreadsheet_id = os.getenv('DATA_CATALOGUE_ASSESSMENT_ID')
+    spreadsheet_id = os.getenv('DATA_CATALOGUE_ASSESMENT_ID')
     gc = pygsheets.authorize(service_file = service_file_path)
     sh = gc.open_by_key(spreadsheet_id)
     try:
@@ -203,7 +213,7 @@ def process_pagePath(df):
 
     return df_pagepath
 
-def process_spreadsheet(df):
+def process_spreadsheet(df, topic_codes):
     '''
     This function merges the data team spreadsheet with the dataframe containing the information 
     fetched from RW and Google Analytics API's
@@ -211,27 +221,14 @@ def process_spreadsheet(df):
     '''
     # Reading data team spreadsheet
     sheet = requests.get(os.getenv('METADATA_SHEET')).content
-    spreadsheet = pd.read_csv(io.StringIO(sheet.decode('utf-8')), header = 0, usecols = ['New WRI_ID', 'API_ID', 'Status', 'Public Title', 'Frequency of Updates', 'Date of Content', 'Data Type'])
+    spreadsheet = pd.read_csv(io.StringIO(sheet.decode('utf-8')), header = 0, usecols = ['New WRI_ID', 'API_ID', 'Status', 'Public Title', 'Frequency of Updates', 'Date of Content','Spatial Resolution','Geographic Coverage','Data Type'])
     # Merge analytics dataframe with data team spreadsheet on RW API id 
     rw_dataset_analytics = df.merge(spreadsheet, left_on = "rw_api_id", right_on = "API_ID", how = 'left')
+    # Drop records that cannot be merged to the metadata spreadsheet
+    rw_dataset_analytics.dropna(subset=['API_ID'], inplace = True)
     rw_dataset_analytics.reset_index(drop = True, inplace = True)
     # Create a topic column based on the first characters of WRI ID
     rw_dataset_analytics['topic'] = rw_dataset_analytics['New WRI_ID'].str[:3]
-    # Create a dictionary to replace topic codes 
-    topic_codes = {"bio": "biodiversity",
-                   "blo": "blog",
-                   "cit": "cities",
-                   "cli": "climate",
-                   "com": "commerce",
-                   "dis": "disaster",
-                   "ene": "energy", 
-                   "foo": "food and agriculture",
-                   "for": "forests", 
-                   "loc": "local data",
-                   "req": "request",
-                   "soc": "society",
-                   "ocn": "ocean", 
-                   "wat": "water"}
     # We replace the abbreviated codes with their full names
     rw_dataset_analytics['topic'] = rw_dataset_analytics['topic'].replace(topic_codes, regex = True)
     # Write pagePath dataframe to a new Google Spreadsheet
@@ -247,13 +244,14 @@ def process_spreadsheet(df):
                                                                                    'rw_api_id':'first','dataset_name':'first','slug':'first',
                                                                                    'published':'first','New WRI_ID':'first','Status':'first',
                                                                                    'Public Title':'first','Date of Content':'first',
-                                                                                   'Frequency of Updates':'first','Data Type':'first','topic':'first'})
+                                                                                   'Frequency of Updates':'first','Spatial Resolution':'first',
+                                                                                   'Geographic Coverage':'first','Data Type':'first','topic':'first'})
     # Write aggregated pagePath dataframe to a new Google Spreadsheet
     write_to_gsheet(rw_metrics_aggr_sheet, rw_aggr_analytics)
     
     return rw_dataset_analytics
 
-def request_eventLabel(startDate, endDate):
+def request_eventLabel(startDate, endDate, topic_codes):
     '''
     This function requests the eventLabel and eventAction information from
     google analytics. In this way we can know which datasets are the most downloaded.
@@ -278,7 +276,7 @@ def request_eventLabel(startDate, endDate):
     df = df.loc[(df['eventAction'] == 'Download Data From Source' ) | (df['eventAction'] == 'Download Data')]
     # Reading data team spreadsheet
     sheet = requests.get(os.getenv('METADATA_SHEET')).content
-    spreadsheet = pd.read_csv(io.StringIO(sheet.decode('utf-8')), header = 0, usecols = ['New WRI_ID', 'API_ID', 'Status', 'Public Title', 'Frequency of Updates', 'Date of Content', 'Data Type']) 
+    spreadsheet = pd.read_csv(io.StringIO(sheet.decode('utf-8')), header = 0, usecols = ['New WRI_ID', 'API_ID', 'Status', 'Public Title', 'Frequency of Updates', 'Date of Content', 'Spatial Resolution','Geographic Coverage','Data Type']) 
     # Merging with data team sheet
     merged = df.merge(spreadsheet, left_on = "eventLabel", right_on = "Public Title", how = 'left')
     # We split the merged dataset into two
@@ -289,11 +287,19 @@ def request_eventLabel(startDate, endDate):
     download_from_rw.dropna(subset=['API_ID'], inplace = True)
     # We reset the index and upload to google spreadsheet
     download_from_rw.reset_index(inplace = True, drop = True)
+    # Create a topic column based on the first characters of WRI ID
+    download_from_rw['topic'] = download_from_rw['New WRI_ID'].str[:3]
+    # We replace the abbreviated codes with their full names
+    download_from_rw['topic'] = download_from_rw['topic'].replace(topic_codes, regex = True)
     write_to_gsheet(downloaded_from_rw, download_from_rw)
     # drop records that cannot be merged to the metadata spreadsheet
     download_from_source.dropna(subset=['API_ID'], inplace = True)
     # We reset the index and upload to google spreadsheet
     download_from_source.reset_index(inplace = True, drop = True)
+    # Create a topic column based on the first characters of WRI ID
+    download_from_source['topic'] =  download_from_source['New WRI_ID'].str[:3]
+    # We replace the abbreviated codes with their full names
+    download_from_source['topic'] =  download_from_source['topic'].replace(topic_codes, regex = True)
     write_to_gsheet(downloaded_from_source, download_from_source)
     # We create a version of the dataframe with for aggregated metrics
     download_aggr_sheet = download_from_rw.append(download_from_source)
@@ -303,7 +309,8 @@ def request_eventLabel(startDate, endDate):
     download_aggr_sheet = download_aggr_sheet.groupby(['API_ID'], as_index=False).agg({'eventLabel': 'first', 'totalEvents':'sum','startDate': 'first', 'endDate':'first',
                                                                                    'New WRI_ID':'first', 'Status':'first',
                                                                                    'Public Title':'first','Date of Content':'first',
-                                                                                   'Frequency of Updates':'first','Data Type':'first'})
+                                                                                   'Frequency of Updates':'first','Spatial Resolution':'first',
+                                                                                   'Geographic Coverage':'first','Data Type':'first'})
     # We reset the index and upload to google spreadsheet
     download_aggr_sheet.reset_index(inplace = True, drop = True)
     write_to_gsheet(downloaded_aggr_sheet, download_aggr_sheet)
@@ -317,6 +324,6 @@ df_analytics = request_pagePath(startDate, endDate)
 df_analytics = process_pagePath(df_analytics)
 # Merge the processed analytics dataframe with data team spreadsheet
 # then upload to a new spreadsheet
-rw_dataset_analytics = process_spreadsheet(df_analytics)
+rw_dataset_analytics = process_spreadsheet(df_analytics,topic_codes)
 # Request eventLabel data and write it to a google spreadsheet
-event_analytics = request_eventLabel(startDate, endDate)
+event_analytics = request_eventLabel(startDate, endDate, topic_codes)
