@@ -9,7 +9,7 @@ import io
 import logging
 import dotenv
 #insert the location of your .env file here:
-dotenv.load_dotenv('/home/hastur_2021/documents/rw_github/cred/.env')
+
 
 
 # Set up logging
