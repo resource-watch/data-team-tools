@@ -3,15 +3,15 @@ import os
 import json
 import logging
 import sys
-
+from io import StringIO 
 import numpy as np
 import pandas as pd
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(stream = sys.stderr, level = logging.INFO)
 
 
 # Pull in metadata
 r = req.get(os.getenv('METADATA_SHEET')).content
-current_mdata = pd.read_csv(pd.compat.StringIO(r.decode('utf-8')), header=0)
+current_mdata = pd.read_csv(StringIO(r.decode('utf-8')), header=0)
 
 # Continue with the metadata that matches elements in the tracking sheet
 ids_on_backoffice = pd.notnull(current_mdata["API_ID"])
@@ -105,7 +105,7 @@ def patch_metadata(info, send=True):
     if (clean_nulls(metadata["Download from Source"]) != None):
         data_dl_orig_link = clean_nulls(metadata["Download from Source"])
     else:
-        data_dl_orig_link = clean_nulls(metadata["Learn More Link"])
+        data_dl_orig_link = None
 
     # If there is no technical title, default to the public title
     if (clean_nulls(metadata["Formal Name"]) != None):
