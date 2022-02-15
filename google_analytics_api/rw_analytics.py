@@ -221,7 +221,7 @@ def process_spreadsheet(df, topic_codes):
     '''
     # Reading data team spreadsheet
     sheet = requests.get(os.getenv('METADATA_SHEET')).content
-    spreadsheet = pd.read_csv(io.StringIO(sheet.decode('utf-8')), header = 0, usecols = ['New WRI_ID', 'API_ID', 'Status', 'Public Title', 'Frequency of Updates', 'Date of Content','Spatial Resolution','Geographic Coverage','Data Type'])
+    spreadsheet = pd.read_csv(io.StringIO(sheet.decode('utf-8')), header = 0, usecols = ['New WRI_ID', 'API_ID', 'Status', 'Public Title', 'Frequency of Updates', 'Date of Content','Spatial Resolution','Geographic Coverage','Data Type','Last Update','Latest Check'])
     # Merge analytics dataframe with data team spreadsheet on RW API id 
     rw_dataset_analytics = df.merge(spreadsheet, left_on = "rw_api_id", right_on = "API_ID", how = 'left')
     # Drop records that cannot be merged to the metadata spreadsheet
@@ -245,7 +245,8 @@ def process_spreadsheet(df, topic_codes):
                                                                                    'published':'first','New WRI_ID':'first','Status':'first',
                                                                                    'Public Title':'first','Date of Content':'first',
                                                                                    'Frequency of Updates':'first','Spatial Resolution':'first',
-                                                                                   'Geographic Coverage':'first','Data Type':'first','topic':'first'})
+                                                                                   'Geographic Coverage':'first','Data Type':'first',
+                                                                                   'Last Update':'first','Latest Check':'first','topic':'first'})
     # Write aggregated pagePath dataframe to a new Google Spreadsheet
     write_to_gsheet(rw_metrics_aggr_sheet, rw_aggr_analytics)
     
@@ -276,7 +277,7 @@ def request_eventLabel(startDate, endDate, topic_codes):
     df = df.loc[(df['eventAction'] == 'Download Data From Source' ) | (df['eventAction'] == 'Download Data')]
     # Reading data team spreadsheet
     sheet = requests.get(os.getenv('METADATA_SHEET')).content
-    spreadsheet = pd.read_csv(io.StringIO(sheet.decode('utf-8')), header = 0, usecols = ['New WRI_ID', 'API_ID', 'Status', 'Public Title', 'Frequency of Updates', 'Date of Content', 'Spatial Resolution','Geographic Coverage','Data Type']) 
+    spreadsheet = pd.read_csv(io.StringIO(sheet.decode('utf-8')), header = 0, usecols = ['New WRI_ID', 'API_ID', 'Status', 'Public Title', 'Frequency of Updates', 'Date of Content', 'Spatial Resolution','Geographic Coverage','Data Type','Last Update','Latest Check']) 
     # Merging with data team sheet
     merged = df.merge(spreadsheet, left_on = "eventLabel", right_on = "Public Title", how = 'left')
     # We split the merged dataset into two
@@ -310,7 +311,9 @@ def request_eventLabel(startDate, endDate, topic_codes):
                                                                                    'New WRI_ID':'first', 'Status':'first',
                                                                                    'Public Title':'first','Date of Content':'first',
                                                                                    'Frequency of Updates':'first','Spatial Resolution':'first',
-                                                                                   'Geographic Coverage':'first','Data Type':'first'})
+                                                                                   'Geographic Coverage':'first','Data Type':'first',
+                                                                                   'Last Update':'first','Latest Check':'first',
+                                                                                   'topic':'first'})
     # We reset the index and upload to google spreadsheet
     download_aggr_sheet.reset_index(inplace = True, drop = True)
     write_to_gsheet(downloaded_aggr_sheet, download_aggr_sheet)
