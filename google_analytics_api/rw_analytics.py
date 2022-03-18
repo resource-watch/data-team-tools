@@ -223,7 +223,7 @@ def process_spreadsheet(df, topic_codes):
     sheet = requests.get(os.getenv('METADATA_SHEET')).content
     spreadsheet = pd.read_csv(io.StringIO(sheet.decode('utf-8')), header = 0, usecols = ['New WRI_ID', 'API_ID', 'Status', 'Public Title', 'Frequency of Updates', 'Date of Content','Spatial Resolution','Geographic Coverage','Data Type','Last Update','Latest Check'])
     # Merge analytics dataframe with data team spreadsheet on RW API id 
-    rw_dataset_analytics = df.merge(spreadsheet, left_on = "rw_api_id", right_on = "API_ID", how = 'left')
+    rw_dataset_analytics = df.merge(spreadsheet, left_on = "rw_api_id", right_on = "API_ID", how = 'outer')
     # Drop records that cannot be merged to the metadata spreadsheet
     rw_dataset_analytics.dropna(subset=['API_ID'], inplace = True)
     rw_dataset_analytics.reset_index(drop = True, inplace = True)
@@ -237,6 +237,12 @@ def process_spreadsheet(df, topic_codes):
     rw_aggr_analytics = rw_dataset_analytics.copy()
     # Drop columns thatwon't be used
     rw_aggr_analytics.drop(['avgTimeOnPage', 'bounceRate', 'exitRate'], axis=1, inplace=True)
+    # drop NAN records before aggregating metrics
+    rw_aggr_analytics.dropna(subset=['API_ID',], inplace = True)
+    rw_aggr_analytics.dropna(subset=['pageviews',], inplace = True)
+    rw_aggr_analytics.dropna(subset=['uniquePageviews',], inplace = True)
+    rw_aggr_analytics.dropna(subset=['entrances',], inplace = True)
+    ###
     rw_aggr_analytics['pageviews'] = rw_aggr_analytics['pageviews'].astype(int)
     rw_aggr_analytics['uniquePageviews'] = rw_aggr_analytics['uniquePageviews'].astype(int)
     rw_aggr_analytics['entrances'] = rw_aggr_analytics['entrances'].astype(int)
@@ -284,26 +290,25 @@ def request_eventLabel(startDate, endDate, topic_codes):
     # One dataset holds metrics for datasets downloaded directly from RW and the other those downloaded from the source site
     download_from_rw = merged.loc[merged['eventAction'] == 'Download Data']
     download_from_source = merged.loc[merged['eventAction'] == 'Download Data From Source']
-    # drop records that cannot be merged to the metadata spreadsheet
-    download_from_rw.dropna(subset=['API_ID'], inplace = True)
-    # We reset the index and upload to google spreadsheet
-    download_from_rw.reset_index(inplace = True, drop = True)
     # Create a topic column based on the first characters of WRI ID
     download_from_rw['topic'] = download_from_rw['New WRI_ID'].str[:3]
     # We replace the abbreviated codes with their full names
     download_from_rw['topic'] = download_from_rw['topic'].replace(topic_codes, regex = True)
-    write_to_gsheet(downloaded_from_rw, download_from_rw)
-    # drop records that cannot be merged to the metadata spreadsheet
-    download_from_source.dropna(subset=['API_ID'], inplace = True)
     # We reset the index and upload to google spreadsheet
-    download_from_source.reset_index(inplace = True, drop = True)
+    download_from_rw.reset_index(inplace = True, drop = True)
+    write_to_gsheet(downloaded_from_rw, download_from_rw)
     # Create a topic column based on the first characters of WRI ID
     download_from_source['topic'] =  download_from_source['New WRI_ID'].str[:3]
     # We replace the abbreviated codes with their full names
     download_from_source['topic'] =  download_from_source['topic'].replace(topic_codes, regex = True)
+    # We reset the index and upload to google spreadsheet
+    download_from_source.reset_index(inplace = True, drop = True)
     write_to_gsheet(downloaded_from_source, download_from_source)
-    # We create a version of the dataframe with for aggregated metrics
+    # We create a version of the dataframe for aggregated metrics
     download_aggr_sheet = download_from_rw.append(download_from_source)
+    # drop records before aggregating metrics
+    download_aggr_sheet.dropna(subset=['API_ID'], inplace = True)
+    download_aggr_sheet.dropna(subset=['totalEvents'], inplace = True)
     # Drop columns thatwon't be used
     download_aggr_sheet.drop(['eventAction'], axis = 1, inplace = True)
     download_aggr_sheet['totalEvents'] = download_aggr_sheet['totalEvents'].astype(int)
