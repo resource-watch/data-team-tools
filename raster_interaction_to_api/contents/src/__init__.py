@@ -5,13 +5,14 @@ import numpy as np
 import pandas as pd
 import sys
 import os
+from io import StringIO 
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 
 # Pull in raster interaction metadata
 r = req.get(os.getenv('RASTER_INTERACTION_SHEET')).content
-current_mdata = pd.read_csv(pd.compat.StringIO(r.decode('utf-8')), header=0, index_col=[0]).dropna(subset=["RW Dataset ID", "RW Layer ID", "GEE Asset ID", "Band Name", "Property", "Number Type", "Number of Decimals", "NRT", "Update?"])
+current_mdata = pd.read_csv(StringIO(r.decode('utf-8')), header=0, index_col=[0]).dropna(subset=["RW Dataset ID", "RW Layer ID", "GEE Asset ID", "Band Name", "Property", "Number Type", "Number of Decimals", "NRT", "Update?"])
 
 # Continue with the metadata that matches elements in the tracking sheet
 ids_on_backoffice = pd.notnull(current_mdata["RW Dataset ID"])
@@ -33,12 +34,12 @@ def get_NRT_int(ds, band, asset, prop, num_type, num_decimals, prefix, suffix):
             "config": {
                 "url": "https://api.resourcewatch.org/v1/query/{ds}?sql=select last({band}) as x from '{asset}'".format(
                     ds=ds, band=band,
-                    asset=asset) + " where time_start >= 1533448800000 and ST_INTERSECTS(ST_SetSRID(ST_GeomFromGeoJSON('{\"type\":\"Point\",\"coordinates\":[{{lng}},{{lat}}]}'),4326),the_geom)"
+                    asset=asset) + " where time_start >= 1533448800000 and ST_INTERSECTS(ST_SetSRID(ST_GeomFromGeoJSON('%7B\"type\":\"Point\",\"coordinates\":[{{lng}},{{lat}}]%7D'),4326),the_geom)"
             },
             "pulseConfig": {
                 "url": "https://api.resourcewatch.org/v1/query/{ds}?sql=select last({band}) as x from '{asset}'".format(
                     ds=ds, band=band,
-                    asset=asset) + " where time_start >= 1533448800000 and ST_INTERSECTS(ST_SetSRID(ST_GeomFromGeoJSON('{\"type\":\"Point\",\"coordinates\":{{point}}}'),4326),the_geom)"
+                    asset=asset) + " where time_start >= 1533448800000 and ST_INTERSECTS(ST_SetSRID(ST_GeomFromGeoJSON('%7B\"type\":\"Point\",\"coordinates\":{{point}}%7D'),4326),the_geom)"
             },
             "output": [{
                 "column": "x",
@@ -67,7 +68,7 @@ def get_regular_int(ds, band, asset, prop, num_type, num_decimals, prefix, suffi
             "config": {
                 "url": "https://api.resourcewatch.org/v1/query/{ds}?sql=select st_summarystats(rast, '{band}', false) as x from '{asset}'".format(
                     ds=ds, band=band,
-                    asset=asset) + " where ST_INTERSECTS(ST_SetSRID(ST_GeomFromGeoJSON('{\"type\":\"Point\",\"coordinates\":[{{lng}},{{lat}}]}'),4326),the_geom)"
+                    asset=asset) + " where ST_INTERSECTS(ST_SetSRID(ST_GeomFromGeoJSON('%7B\"type\":\"Point\",\"coordinates\":[{{lng}},{{lat}}]%7D'),4326),the_geom)"
             },
             "output": [{
                 "column": "x.{}.mean".format(band),
