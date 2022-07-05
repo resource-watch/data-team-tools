@@ -17,6 +17,8 @@ current_mdata = pd.read_csv(StringIO(r.decode('utf-8')), header=0)
 ids_on_backoffice = pd.notnull(current_mdata["API_ID"])
 metadata_to_api = current_mdata.loc[ids_on_backoffice]
 metadata_to_api = metadata_to_api.reset_index().set_index("API_ID")
+# Update metadata for one dataset
+metadata_to_api = metadata_to_api.loc[metadata_to_api['New WRI_ID']=='']  # need to fill in the new WRI_ID, like 'foo.067.rw0'
 
 # line breaks from html to markdown (b/c newlines not preserved when reading in the google sheet)
 metadata_to_api.replace('<br>', '  \n  \n', regex=True, inplace=True)
@@ -216,3 +218,4 @@ def send_patches(df):
 
 def main():
     send_patches(metadata_to_api)
+    
