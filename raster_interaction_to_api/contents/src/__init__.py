@@ -62,22 +62,42 @@ def get_regular_int(ds, band, asset, prop, num_type, num_decimals, prefix, suffi
         if num_decimals == 'scientific':
             num_format = "0,0.0[0]e+0"
 
+    # sql for images in ee.ImageCollection
     regular_raster_int = {
         "interactionConfig": {
             "type": "intersection",
             "config": {
-                "url": "https://api.resourcewatch.org/v1/query/{ds}?sql=select st_summarystats(rast, '{band}', false) as x from '{asset}'".format(
+                "url": "https://api.resourcewatch.org/v1/query/{ds}?sql=select avg({band}) as x from data where system:index='{asset}' and ".format(
                     ds=ds, band=band,
-                    asset=asset) + " where ST_INTERSECTS(ST_SetSRID(ST_GeomFromGeoJSON('%7B\"type\":\"Point\",\"coordinates\":[{{lng}},{{lat}}]%7D'),4326),the_geom)"
+                    asset=asset.split('/')[-1]) + "ST_INTERSECTS(ST_SetSRID(ST_GeomFromGeoJSON('%7B\"type\":\"Point\",\"coordinates\":[{{lng}},{{lat}}]%7D'),4326),the_geom)"
             },
             "output": [{
-                "column": "x.{}.mean".format(band),
+                "column": "x",
                 "property": "{}".format(prop),
                 "type": "{}".format(num_type),
                 "format": "{}".format(num_format),
                 "prefix": "{}".format(prefix),
                 "suffix": "{}".format(suffix)
             }]}}
+
+    # sql for ee.Image
+    # regular_raster_int = {
+    #     "interactionConfig": {
+    #         "type": "intersection",
+    #         "config": {
+    #             "url": "https://api.resourcewatch.org/v1/query/{ds}?sql=select st_summarystats(rast, '{band}', false) as x from '{asset}'".format(
+    #                 ds=ds, band=band,
+    #                 asset=asset) + " where ST_INTERSECTS(ST_SetSRID(ST_GeomFromGeoJSON('%7B\"type\":\"Point\",\"coordinates\":[{{lng}},{{lat}}]%7D'),4326),the_geom)"
+    #         },
+    #         "output": [{
+    #             "column": "x.{}.mean".format(band),
+    #             "property": "{}".format(prop),
+    #             "type": "{}".format(num_type),
+    #             "format": "{}".format(num_format),
+    #             "prefix": "{}".format(prefix),
+    #             "suffix": "{}".format(suffix)
+    #         }]}}
+
     return regular_raster_int
 
 
