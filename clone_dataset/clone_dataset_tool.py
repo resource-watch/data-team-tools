@@ -264,5 +264,12 @@ clone_attributes = {
     'name': new_dataset_name
 }
 # Clone dataset
-new_dataset_id = clone_ds(dataset_to_copy, token=API_TOKEN, enviro='production', dataset_params=clone_attributes, clone_children=True, clone_first_layer_only=clone_first_layer_only, clone_default_widget_only=clone_default_widget_only)
+new_dataset_id = clone_ds(dataset_to_copy, token=API_TOKEN, enviro='production', dataset_params=clone_attributes, clone_children=clone_children, clone_first_layer_only=clone_first_layer_only, clone_default_widget_only=clone_default_widget_only)
 print('new dataset API ID:' + new_dataset_id)
+
+
+
+# Delete dataset (By default this will delete the new dataset you just created)
+#dataset_to_delete = LMIPy.Dataset(new_dataset_id)
+#delete_url = f'{dataset_to_delete.server}/v1/dataset/{dataset_to_delete.id}'
+#requests.delete(delete_url, headers=create_headers())
