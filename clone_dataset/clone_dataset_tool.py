@@ -46,7 +46,7 @@ API_TOKEN = os.getenv('RW_API_KEY')
 def create_headers():
     return {
         'content-type': "application/json",
-        'authorization': "{}".format(os.getenv('apiToken')),
+        'authorization': f'Bearer {API_TOKEN}',
     }
 
 def clone_ds(self, token=None, enviro='preproduction', clone_server=None, dataset_params=None, clone_children=True, clone_first_layer_only=True, clone_default_widget_only=True, published = False):
@@ -68,7 +68,7 @@ def clone_ds(self, token=None, enviro='preproduction', clone_server=None, datase
                 clone_dataset_attr[k] = dataset_params.get(k, '')
         payload = {
             'dataset': {
-                'application': ['rw'],
+                'application': clone_dataset_attr['application'],
                 'connectorType': clone_dataset_attr['connectorType'],
                 'connectorUrl': clone_dataset_attr['connectorUrl'],
                 'tableName': clone_dataset_attr['tableName'],
@@ -266,3 +266,10 @@ clone_attributes = {
 # Clone dataset
 new_dataset_id = clone_ds(dataset_to_copy, token=API_TOKEN, enviro='production', dataset_params=clone_attributes, clone_children=True, clone_first_layer_only=clone_first_layer_only, clone_default_widget_only=clone_default_widget_only)
 print('new dataset API ID:' + new_dataset_id)
+
+
+# Delete dataset and all its layers/widgets (By default this will delete the new dataset you just created)
+#delete_dataset_id = new_dataset_id
+#dataset_to_delete = LMIPy.Dataset(delete_dataset_id)
+#delete_url = f'{dataset_to_delete.server}/v1/dataset/{dataset_to_delete.id}'
+#requests.delete(delete_url, headers=create_headers())
