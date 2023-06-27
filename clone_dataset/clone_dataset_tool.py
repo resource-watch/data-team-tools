@@ -68,7 +68,7 @@ def clone_ds(self, token=None, enviro='preproduction', clone_server=None, datase
                 clone_dataset_attr[k] = dataset_params.get(k, '')
         payload = {
             'dataset': {
-                'application': ['rw'],
+                'application': clone_dataset_attr['application'],
                 'connectorType': clone_dataset_attr['connectorType'],
                 'connectorUrl': clone_dataset_attr['connectorUrl'],
                 'tableName': clone_dataset_attr['tableName'],
